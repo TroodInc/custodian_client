@@ -21,19 +21,22 @@ class BaseField:
 
     cast_func = None
 
-    @classmethod
-    def from_raw(cls, value):
-        if cls.cast_func is None:
+    def from_raw(self, value):
+        if self.cast_func is None:
             raise NotImplementedError
         else:
-            return cls.cast_func(value)
+            return self.cast_func(value)
 
-    @classmethod
-    def to_raw(cls, value):
-        if cls.cast_func is None:
+    def to_raw(self, value):
+        if self.cast_func is None:
             raise NotImplementedError
         else:
-            return cls.cast_func(value)
+            if value is None:
+                if self.optional:
+                    value = self.get_default_value()
+                else:
+                    raise ValueError('"{}" field is required'.format(self.name))
+            return self.cast_func(value)
 
     @classmethod
     def get_default_value(cls):
