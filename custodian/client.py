@@ -27,7 +27,8 @@ class Client:
         """
         url = '/'.join([self.server_url, command.name])
         response = getattr(requests, command.method)(url, data=data)
-        if response.json()['status'] == 'OK':
-            return True
+        response_content = response.json()
+        if response_content['status'] == 'OK':
+            return response_content.get('data', None)
         else:
             raise CommandExecutionFailureException('Command execution failed')

@@ -1,6 +1,6 @@
 from typing import List
 
-from custodian.objects.fields import BaseField
+from custodian.objects.fields import BaseField, FieldsManager
 
 
 class Object:
@@ -22,3 +22,8 @@ class Object:
             'cas': self.cas,
             'fields': [x.serialize() for x in self.fields]
         }
+
+    @classmethod
+    def deserialize(cls, data):
+        data['fields'] = [FieldsManager.get_field_by_type(x['type'])(**x) for x in data['fields']]
+        return Object(**data)

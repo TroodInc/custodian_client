@@ -1,4 +1,5 @@
 from custodian.command import Command, COMMAND_METHOD
+from custodian.objects.fields import FieldsManager
 from custodian.objects.model import Object
 
 
@@ -8,7 +9,15 @@ class ObjectsManager:
     def __init__(self, client):
         self.client = client
 
-    def create(self, obj) -> Object:
+    def _get_object_command_name(self, object_name: str):
+        """
+        Constructs API command for existing Custodian object
+        :param obj:
+        :return:
+        """
+        return '/'.join([self._command_name, object_name])
+
+    def create(self, obj: Object) -> Object:
         """
         Creates new object in Custodian
         :param obj:
@@ -20,8 +29,36 @@ class ObjectsManager:
         )
         return obj
 
-    def update(self):
-        pass
+    def update(self, obj: Object) -> Object:
+        """
+        Updates existing object in Custodian
+        :param obj:
+        :return:
+        """
+        self.client.execute(
+            command=Command(name=self._get_object_command_name(obj.name), method=COMMAND_METHOD.PUT),
+            data=obj.serialize()
+        )
+        return obj
 
-    def delete(self):
-        pass
+    def delete(self, obj: Object) -> Object:
+        """
+        Deletes existing object from Custodian
+        :param obj:
+        :return:
+        """
+
+        self.client.execute(
+            command=Command(name=self._get_object_command_name(obj.name), method=COMMAND_METHOD.DELETE)
+        )
+        return obj
+
+    def get(self, object_name):
+        """
+        Retrieves existing object from Custodian by name
+        :param object_name:
+        """
+        data = self.client.execute(
+            command=Command(name=self._get_object_command_name(object_name), method=COMMAND_METHOD.GET)
+        )
+        return Object.deserialize(data)

@@ -1,7 +1,10 @@
+from custodian.exceptions import FieldDoesNotExistException
+
+
 class BaseField:
     type = None
 
-    def __init__(self, name: str, optional: bool = False, default=None):
+    def __init__(self, name: str, optional: bool = False, default=None, **kwargs):
         if self.type is None:
             raise NotImplementedError('Attempted to instantiate abstract field class')
         self.name = name
@@ -35,3 +38,25 @@ class ArrayField(BaseField):
 
 class ObjectField(BaseField):
     type: str = 'bool'
+
+
+class FieldsManager:
+    fields = {
+        NumberField.type: NumberField,
+        StringField.type: StringField,
+        BooleanField.type: BooleanField,
+        ArrayField.type: ArrayField,
+        ObjectField.type: ObjectField
+    }
+
+    @classmethod
+    def get_field_by_type(cls, field_type: str):
+        """
+        Returns field associated with given type
+        :param field_type:
+        :return:
+        """
+        try:
+            return cls.fields[field_type]
+        except IndexError:
+            raise FieldDoesNotExistException()
