@@ -1,5 +1,4 @@
 from custodian.command import Command, COMMAND_METHOD
-from custodian.objects.fields import FieldsManager
 from custodian.objects.model import Object
 
 
@@ -62,3 +61,11 @@ class ObjectsManager:
             command=Command(name=self._get_object_command_name(object_name), method=COMMAND_METHOD.GET)
         )
         return Object.deserialize(data)
+
+    def get_all(self):
+        """
+        Retrieves a list of existing objects from Custodian
+        :return:
+        """
+        # TODO: Implement this method
+        raise NotImplementedError
