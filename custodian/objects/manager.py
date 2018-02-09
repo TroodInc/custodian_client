@@ -3,18 +3,19 @@ from custodian.objects.model import Object
 
 
 class ObjectsManager:
-    _command_name = 'meta'
+    _base_command_name = 'meta'
 
     def __init__(self, client):
         self.client = client
 
-    def _get_object_command_name(self, object_name: str):
+    @classmethod
+    def get_object_command_name(cls, object_name: str):
         """
         Constructs API command for existing Custodian object
         :param obj:
         :return:
         """
-        return '/'.join([self._command_name, object_name])
+        return '/'.join([cls._base_command_name, object_name])
 
     def create(self, obj: Object) -> Object:
         """
@@ -23,7 +24,7 @@ class ObjectsManager:
         :return:
         """
         self.client.execute(
-            command=Command(name=self._command_name, method=COMMAND_METHOD.POST),
+            command=Command(name=self._base_command_name, method=COMMAND_METHOD.POST),
             data=obj.serialize()
         )
         return obj
@@ -35,7 +36,7 @@ class ObjectsManager:
         :return:
         """
         self.client.execute(
-            command=Command(name=self._get_object_command_name(obj.name), method=COMMAND_METHOD.PUT),
+            command=Command(name=self.get_object_command_name(obj.name), method=COMMAND_METHOD.PUT),
             data=obj.serialize()
         )
         return obj
@@ -48,7 +49,7 @@ class ObjectsManager:
         """
 
         self.client.execute(
-            command=Command(name=self._get_object_command_name(obj.name), method=COMMAND_METHOD.DELETE)
+            command=Command(name=self.get_object_command_name(obj.name), method=COMMAND_METHOD.DELETE)
         )
         return obj
 
@@ -58,7 +59,7 @@ class ObjectsManager:
         :param object_name:
         """
         data = self.client.execute(
-            command=Command(name=self._get_object_command_name(object_name), method=COMMAND_METHOD.GET)
+            command=Command(name=self.get_object_command_name(object_name), method=COMMAND_METHOD.GET)
         )
         return Object.deserialize(data)
 

@@ -2,10 +2,11 @@ import pytest
 
 from custodian.objects.fields import NumberField, StringField, BooleanField
 from custodian.objects.model import Object
+from custodian.records.model import Record
 
 
 @pytest.fixture
-def default_object():
+def person_object():
     return Object(
         name='person',
         key='id',
@@ -16,3 +17,8 @@ def default_object():
             BooleanField(name='is_active')
         ]
     )
+
+
+@pytest.fixture
+def person_record(person_object):
+    return Record(obj=person_object, id=23, name='Ivan Petrov', is_active=True)

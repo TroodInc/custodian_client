@@ -19,25 +19,50 @@ class BaseField:
             'default': self.default
         }
 
+    cast_func = None
+
+    @classmethod
+    def from_raw(cls, value):
+        if cls.cast_func is None:
+            raise NotImplementedError
+        else:
+            return cls.cast_func(value)
+
+    @classmethod
+    def to_raw(cls, value):
+        if cls.cast_func is None:
+            raise NotImplementedError
+        else:
+            return cls.cast_func(value)
+
+    @classmethod
+    def get_default_value(cls):
+        return cls.cast_func()
+
 
 class NumberField(BaseField):
     type: str = 'number'
+    cast_func = float
 
 
 class StringField(BaseField):
     type: str = 'string'
+    cast_func = str
 
 
 class BooleanField(BaseField):
     type: str = 'bool'
+    cast_func = bool
 
 
 class ArrayField(BaseField):
     type: str = 'array'
+    cast_func = lambda x: x
 
 
 class ObjectField(BaseField):
     type: str = 'bool'
+    cast_func = lambda x: x
 
 
 class FieldsManager:
