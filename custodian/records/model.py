@@ -6,7 +6,7 @@ class Record:
 
     def __init__(self, obj: Object, **kwargs):
         """
-        Assembles record based on obj.fields specification
+        Assembles a record based on obj.fields specification
         :param obj:
         :param kwargs:
         """
@@ -26,9 +26,14 @@ class Record:
 
     def get_pk(self):
         """
-        Returns record`s primary key value
+        Returns the record`s primary key value
         """
         return getattr(self, self.obj.key)
 
     def exists(self):
+        """
+        True if the record exists in the Custodian
+        :return:
+        """
+        # TODO: add check via API call
         return self.get_pk() is not None

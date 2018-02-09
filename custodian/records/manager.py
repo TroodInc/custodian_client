@@ -22,22 +22,34 @@ class RecordsManager:
             args.append(str(record_id))
         return '/'.join(args)
 
-    def create(self, record):
+    def create(self, record: Record):
         """
         Creates a new record in the Custodian
         :param record:
         :return:
         """
         data = self.client.execute(
-            command=Command(name=self._get_record_command_name(record.obj), method=COMMAND_METHOD.POST)
+            command=Command(name=self._get_record_command_name(record.obj), method=COMMAND_METHOD.POST),
+            data=record.serialize()
         )
         return Record(obj=record.obj, **data)
 
     def update(self):
         pass
 
-    def delete(self):
-        pass
+    def delete(self, record: Record):
+        """
+        Deletes the record from the Custodian
+        :param record:
+        :return:
+                """
+        self.client.execute(
+            command=Command(
+                name=self._get_record_command_name(record.obj, record.get_pk()),
+                method=COMMAND_METHOD.DELETE
+            )
+        )
+        setattr(record, record.obj.key, None)
 
     def get(self, obj: Object, record_id: str):
         """
