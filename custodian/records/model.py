@@ -25,3 +25,6 @@ class Record:
         for field in self.obj.fields:
             data[field.name] = field.to_raw(getattr(self, field.name))
         return data
+
+    def __repr__(self):
+        return '<Record #{} of "{}" object>'.format(getattr(self, self.obj.key), self.obj.name)
