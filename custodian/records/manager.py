@@ -34,8 +34,16 @@ class RecordsManager:
         )
         return Record(obj=record.obj, **data)
 
-    def update(self):
-        pass
+    def update(self, record: Record):
+        """
+        Updates an existing record in the Custodian
+        """
+        data = self.client.execute(
+            command=Command(name=self._get_record_command_name(record.obj, record.get_pk()), method=COMMAND_METHOD.PUT),
+            data=record.serialize()
+        )
+        record.__init__(obj=record.obj, **data)
+        return record
 
     def delete(self, record: Record):
         """
