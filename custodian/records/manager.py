@@ -2,6 +2,7 @@ from custodian.command import Command, COMMAND_METHOD
 from custodian.exceptions import CommandExecutionFailureException
 from custodian.objects.model import Object
 from custodian.records.model import Record
+from custodian.records.query import Query
 
 
 class RecordsManager:
@@ -73,3 +74,6 @@ class RecordsManager:
             return Record(obj=obj, **data)
         except CommandExecutionFailureException:
             return None
+
+    def query(self, obj: Object):
+        return Query(obj)
