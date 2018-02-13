@@ -43,6 +43,7 @@ class Q:
         expressions = []
         for key, value in self._query.items():
             operator, field = self._parse_key(key)
+            value = self._normalize_value(value)
             expressions.append('{}({}, {})'.format(operator, field, value))
         query_string = ', '.join(expressions)
         # and then apply logical operators
@@ -68,6 +69,16 @@ class Q:
         if operator not in self._KNOWN_OPERATORS:
             raise QueryException('"{}" operator is unknown'.format(operator))
         return operator, field
+
+    def _normalize_value(self, value):
+        """
+        Returns RQL-friendly value
+        :param value:
+        :return:
+        """
+        if isinstance(value, (list, tuple)):
+            return '({})'.format(', '.join([str(x) for x in value]))
+        return value
 
 
 def mark_as_unevaluated(func):

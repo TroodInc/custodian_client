@@ -15,6 +15,14 @@ def test_q():
     assert_that(queryset.to_string(), equal_to('and(or(gt(age, 18), lt(age, 53)), eq(is_active, True))'))
 
 
+def test_q_with_list_value():
+    """
+    Tests regular Q-expression`s string representation with a list as a value
+    """
+    queryset = Q(city_id__in=[1, 4, 7])
+    assert_that(queryset.to_string(), equal_to('in(city_id, (1, 4, 7))'))
+
+
 def test_q_unknown_operator_raises_exception():
     """
     Tests regular Q-expression`s string representation
