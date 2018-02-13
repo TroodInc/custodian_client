@@ -106,3 +106,34 @@ def test_client_returns_iterable_of_records_on_bulk_query(person_object: Object,
         assert_that(len(query), equal_to(2))
         for record in query:
             assert_that(record, instance_of(Record))
+
+
+def test_client_returns_list_of_records_on_bulk_create(person_object: Object):
+    records = [
+        Record(
+            obj=person_object,
+            name='Ivan Petrov',
+            is_active=False
+        ),
+        Record(
+            obj=person_object,
+            name='Nikolay Kozlov',
+            is_active=True
+        )
+    ]
+
+    client = Client(server_url='http://mocked/custodian')
+    with requests_mock.Mocker() as mocker:
+        mocker.post(
+            'http://mocked/custodian/data/bulk/{}'.format(person_object.name),
+            json={
+                'status': 'OK',
+                'data': [
+                    {**x.serialize(), **{'id': records.index(x) + 1}} for x in records
+                ]
+            }
+        )
+        created_records = client.records.bulk_create(*records)
+        for created_record in created_records:
+            assert_that(created_record, instance_of(Record))
+            assert_that(created_record.name)

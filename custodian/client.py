@@ -27,7 +27,7 @@ class Client:
         :raises CommandExecutionFailureException:
         """
         url = '/'.join([self.server_url, command.name])
-        response = getattr(requests, command.method)(url, data=data, params=params)
+        response = getattr(requests, command.method)(url, json=data, params=params)
         response_content = response.json()
         if response_content['status'] == 'OK':
             return response_content.get('data', None)

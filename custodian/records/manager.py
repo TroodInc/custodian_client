@@ -1,3 +1,5 @@
+from typing import Tuple
+
 from custodian.command import Command, COMMAND_METHOD
 from custodian.exceptions import CommandExecutionFailureException
 from custodian.objects.model import Object
@@ -33,7 +35,7 @@ class RecordsManager:
         args = [self._base_bulk_command_name, obj.name]
         return '/'.join(args)
 
-    def create(self, record: Record):
+    def create(self, record: Record) -> Record:
         """
         Creates a new record in the Custodian
         :param record:
@@ -109,3 +111,40 @@ class RecordsManager:
         :return:
         """
         return Query(obj, self)
+
+    def _check_records_have_same_object(self, records: Tuple[Record]):
+        """
+        Bulk operations are permitted only for one object at time
+        :param records:
+        :return:
+        """
+        obj = records[0].obj
+        for record in records[1:]:
+            assert obj.name == record.obj.name, 'Attempted to perform bulk operation on the list of diverse records'
+        return True
+
+    def bulk_create(self, *records: Record):
+        """
+        Creates new records in the Custodian
+        :param records:
+        :return:
+        """
+        self._check_records_have_same_object(records)
+        obj = records[0].obj
+        data = self.client.execute(
+            command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.POST),
+            data=[record.serialize() for record in records]
+        )
+        return [Record(obj=obj, **record_data) for record_data in data]
+
+    def bulk_update(self):
+        """
+
+        :return:
+        """
+
+    def bulk_delete(self):
+        """
+
+        :return:
+        """
