@@ -44,9 +44,19 @@ def test_object_with_related_inner_object_field_serializes_itself(person_object)
     assert_that(serialized_object['fields'][3], equal_to(expected_serialized_field))
 
 
-def test_object_with_related_outer_object_field_serializes_itself(person_object):
-    obj = Object(
+def test_object_with_related_outer_object_field_serializes_itself():
+    address_object = Object(
         name='address',
+        key='id',
+        cas=True,
+        fields=[
+            NumberField(name='id', optional=True),
+            StringField(name='street'),
+            BooleanField(name='house')
+        ]
+    )
+    person_obj = Object(
+        name='person',
         key='id',
         cas=True,
         fields=[
@@ -54,15 +64,16 @@ def test_object_with_related_outer_object_field_serializes_itself(person_object)
             StringField(name='street'),
             BooleanField(name='house'),
             RelatedObjectField(
-                name='persons',
-                obj=person_object,
+                name='addresses',
+                obj=address_object,
+                outer_link_field='address_id',
                 link_type=RelatedObjectField.LINK_TYPES.OUTER,
                 many=True
             )
         ]
     )
-    serialized_object = obj.serialize()
+    serialized_object = person_obj.serialize()
     assert_that(serialized_object, is_(instance_of(dict)))
-    expected_serialized_field = {'name': 'persons', 'type': 'array', 'optional': False, 'linkMeta': 'person',
-                                 'linkType': 'outer'}
+    expected_serialized_field = {'name': 'addresses', 'type': 'array', 'optional': False, 'linkMeta': 'address',
+                                 'linkType': 'outer', 'outerLinkField': 'address_id'}
     assert_that(serialized_object['fields'][3], equal_to(expected_serialized_field))

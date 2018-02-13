@@ -1,6 +1,6 @@
 from typing import NamedTuple
 
-from custodian.exceptions import FieldDoesNotExistException
+from custodian.exceptions import FieldDoesNotExistException, ImproperlyConfiguredFieldException
 
 
 class BaseField:
@@ -76,19 +76,28 @@ class RelatedObjectField(BaseField):
     type: str = object
     _many: bool = False
 
-    def __init__(self, name: str, obj, link_type: str, optional: bool = False, many=False):
+    def __init__(self, name: str, obj, link_type: str, optional: bool = False, outer_link_field: str = None,
+                 many=False):
+        if link_type == self.LINK_TYPES.OUTER and outer_link_field is None:
+            raise ImproperlyConfiguredFieldException('"outer_link_field" must be specified for "outer" link type')
+
         self._link_type = link_type
         self._obj = obj
         self._many = many
+        self._outer_link_field = outer_link_field
         super(RelatedObjectField, self).__init__(name, optional, default=None)
 
     def serialize(self):
         return {
-            'name': self.name,
-            'type': 'object' if not self._many else 'array',
-            'optional': self.optional,
-            'linkMeta': self._obj.name,
-            'linkType': self._link_type
+            **{
+                'name': self.name,
+                'type': 'object' if not self._many else 'array',
+                'optional': self.optional,
+                'linkMeta': self._obj.name,
+                'linkType': self._link_type,
+
+            },
+            **({'outerLinkField': self._outer_link_field} if self._outer_link_field else {})
         }
 
 

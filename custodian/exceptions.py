@@ -8,3 +8,7 @@ class FieldDoesNotExistException(Exception):
 
 class QueryException(Exception):
     pass
+
+
+class ImproperlyConfiguredFieldException(Exception):
+    pass
