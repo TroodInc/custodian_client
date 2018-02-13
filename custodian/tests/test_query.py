@@ -1,5 +1,7 @@
+import pytest
 from hamcrest import *
 
+from custodian.exceptions import QueryException
 from custodian.objects.model import Object
 from custodian.records.query import Q, Query
 
@@ -10,6 +12,15 @@ def test_q():
     """
     queryset = (Q(age__gt=18) | Q(age__lt=53)) & Q(is_active__eq=True)
     assert_that(queryset.to_string(), equal_to('and(or(gt(age, 18), lt(age, 53)), eq(is_active, True))'))
+
+
+def test_q_unknown_operator_raises_exception():
+    """
+    Tests regular Q-expression`s string representation
+    """
+    queryset = (Q(age__gt=18) | Q(age__lt=53)) & Q(is_active__custom_operator=True)
+    with pytest.raises(QueryException):
+        queryset.to_string()
 
 
 def test_inverted_q():

@@ -1,6 +1,6 @@
 from copy import deepcopy
-from typing import List
 
+from custodian.exceptions import QueryException
 from custodian.objects.model import Object
 
 
@@ -8,6 +8,8 @@ class Q:
     _query = None
     _logical_expressions = None
     _inverted = None
+
+    _KNOWN_OPERATORS = ('in', 'like', 'eq', 'ne', 'gt', 'ge', 'lt', 'le')
 
     def __init__(self, **kwargs):
         self._query = deepcopy(kwargs)
@@ -63,6 +65,8 @@ class Q:
         split_key = key.split('__')
         operator = split_key[-1]
         field = '.'.join(split_key[:-1])
+        if operator not in self._KNOWN_OPERATORS:
+            raise QueryException('"{}" operator is unknown'.format(operator))
         return operator, field
 
 
