@@ -71,3 +71,10 @@ def test_query_resets_evaluated_result_on_query_modifications(person_object: Obj
     assert_that(query._is_evaluated)
     query = query.filter(client__first_name__eq='Ivan')
     assert_that(not query._is_evaluated)
+
+
+def test_query_filter_operation_does_not_affect_existing_query(person_object: Object):
+    base_query = Query(person_object, None).filter(Q(is_active__eq=True))
+    updated_query = base_query.filter(address__city__name__eq='St. Petersburg')
+    assert_that(base_query.to_string(), equal_to('eq(is_active, True)'))
+    assert_that(updated_query.to_string(), equal_to('and(eq(is_active, True), eq(address.city.name, St. Petersburg))'))

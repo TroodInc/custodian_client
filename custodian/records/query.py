@@ -81,18 +81,6 @@ class Q:
         return value
 
 
-def mark_as_unevaluated(func):
-    def wrapper(*args, **kwargs):
-        result = func(*args, **kwargs)
-        self = args[0]
-        # mark as unevaluated only if no exception was raised
-        self._is_evaluated = False
-        self._result = None
-        return result
-
-    return wrapper
-
-
 def evaluate(func):
     def wrapper(*args, **kwargs):
         self = args[0]
@@ -119,7 +107,6 @@ class Query:
         self._is_evaluated = False
         self._result = None
 
-    @mark_as_unevaluated
     def filter(self, q_object: Q = None, **kwargs):
         """
         Applies filters to the current query
@@ -127,11 +114,12 @@ class Query:
         :param kwargs:
         :return:
         """
+        new_query = QueryFactory.clone(self)
         if q_object:
-            self._q_objects.append(q_object)
+            new_query._q_objects.append(q_object)
         if kwargs:
-            self._q_objects.append(Q(**kwargs))
-        return self
+            new_query._q_objects.append(Q(**kwargs))
+        return new_query
 
     def to_string(self) -> str:
         """
@@ -155,7 +143,6 @@ class Query:
             query_string = ', '.join([query_string, limit_expression])
         return query_string
 
-    @mark_as_unevaluated
     def order_by(self, *orderings: str):
         """
         Sets ordering to the Query object.
@@ -165,25 +152,26 @@ class Query:
         :param ordering:
         :return:
         """
+        new_query = QueryFactory.clone(self)
         for ordering in orderings:
             ordering = ordering.replace('__', '.')
             if not ordering.startswith('-'):
                 ordering = '+' + ordering
-            self._orderings.append(ordering)
-        return self
+            new_query._orderings.append(ordering)
+        return new_query
 
-    @mark_as_unevaluated
     def __getitem__(self, item):
         if self._limit:
             raise Exception('Cannot limit already limited query')
+        new_query = QueryFactory.clone(self)
         if isinstance(item, slice):
             offset = item.start
             limit = item.stop - item.start
         else:
             offset = item
             limit = 1
-        self._limit = (offset, limit)
-        return self
+        new_query._limit = (offset, limit)
+        return new_query
 
     @evaluate
     def __iter__(self):
@@ -201,3 +189,13 @@ class Query:
         self._result = records
         self._is_evaluated = True
         return self._result
+
+
+class QueryFactory:
+    @classmethod
+    def clone(cls, query: Query):
+        new_query = Query(obj=query._obj, manager=query._manager)
+        new_query._q_objects = query._q_objects[:]
+        new_query._orderings = query._orderings[:]
+        new_query._limit = query._limit
+        return new_query
