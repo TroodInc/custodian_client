@@ -1,4 +1,5 @@
 from copy import deepcopy
+from typing import List
 
 from custodian.objects.model import Object
 
@@ -67,10 +68,14 @@ class Q:
 
 class Query:
     _q_objects = None
+    _orderings = None
+    _limit = None
 
     def __init__(self, obj: Object):
         self.obj = obj
         self._q_objects = []
+        self._orderings = []
+        self._limit = None
 
     def filter(self, q_object: Q = None, **kwargs):
         """
@@ -91,9 +96,46 @@ class Query:
         components
         :return:
         """
+        # queries
         query_string = self._q_objects[0].to_string()
         for q_object in self._q_objects[1:]:
             query_string = '{}({}, {})'.format(
                 'and', query_string, q_object.to_string()
             )
+        # ordering options
+        if self._orderings:
+            ordering_expression = 'sort({})'.format(', '.join(self._orderings))
+            query_string = ', '.join([query_string, ordering_expression])
+        # limit option
+        if self._limit:
+            limit_expression = 'limit({}, {})'.format(self._limit[0], self._limit[1])
+            query_string = ', '.join([query_string, limit_expression])
         return query_string
+
+    def order_by(self, *orderings: str):
+        """
+        Sets ordering to the Query object.
+        Examples:
+        query.order_by('person__last_name')
+        query.order_by('-person__last_name') #descending ordering
+        :param ordering:
+        :return:
+        """
+        for ordering in orderings:
+            ordering = ordering.replace('__', '.')
+            if not ordering.startswith('-'):
+                ordering = '+' + ordering
+            self._orderings.append(ordering)
+        return self
+
+    def __getitem__(self, item):
+        if self._limit:
+            raise Exception('Cannot limit already limited query')
+        if isinstance(item, slice):
+            offset = item.start
+            limit = item.stop - item.start
+        else:
+            offset = item
+            limit = 1
+        self._limit = (offset, limit)
+        return self

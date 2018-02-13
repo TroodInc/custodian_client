@@ -4,3 +4,7 @@ class CommandExecutionFailureException(Exception):
 
 class FieldDoesNotExistException(Exception):
     pass
+
+
+class QueryException(Exception):
+    pass
