@@ -135,16 +135,35 @@ class RecordsManager:
             command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.POST),
             data=[record.serialize() for record in records]
         )
-        return [Record(obj=obj, **record_data) for record_data in data]
+        for i in range(0, len(data)):
+            records[i].__init__(obj, **data[i])
+        return list(records)
 
-    def bulk_update(self):
+    def bulk_update(self, *records: Record):
         """
-
         :return:
         """
+        self._check_records_have_same_object(records)
+        obj = records[0].obj
+        data = self.client.execute(
+            command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.PUT),
+            data=[record.serialize() for record in records]
+        )
+        for i in range(0, len(data)):
+            records[i].__init__(obj, **data[i])
+        return list(records)
 
-    def bulk_delete(self):
+    def bulk_delete(self, *records: Record):
         """
-
+        Deletes records from the Custodian
         :return:
         """
+        self._check_records_have_same_object(records)
+        obj = records[0].obj
+        self.client.execute(
+            command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.DELETE),
+            data=[{obj.key: record.get_pk()} for record in records]
+        )
+        for record in records:
+            record.id = None
+        return list(records)
