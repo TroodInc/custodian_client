@@ -6,21 +6,31 @@ from custodian.records.query import Query
 
 
 class RecordsManager:
-    _base_command_name = 'data/single'
+    _base_single_command_name = 'data/single'
+    _base_bulk_command_name = 'data/bulk'
 
     def __init__(self, client):
         self.client = client
 
-    def _get_record_command_name(self, obj: Object, record_id=None) -> str:
+    def _get_single_record_command_name(self, obj: Object, record_id=None) -> str:
         """
         Constructs an uri chunk for API communication
         :param obj:
         :param record_id:
         :return:
         """
-        args = [self._base_command_name, obj.name]
+        args = [self._base_single_command_name, obj.name]
         if record_id:
             args.append(str(record_id))
+        return '/'.join(args)
+
+    def _get_bulk_command_name(self, obj: Object) -> str:
+        """
+        Constructs an uri chunk for API communication
+        :param obj:
+        :return:
+        """
+        args = [self._base_bulk_command_name, obj.name]
         return '/'.join(args)
 
     def create(self, record: Record):
@@ -30,7 +40,7 @@ class RecordsManager:
         :return:
         """
         data = self.client.execute(
-            command=Command(name=self._get_record_command_name(record.obj), method=COMMAND_METHOD.POST),
+            command=Command(name=self._get_single_record_command_name(record.obj), method=COMMAND_METHOD.POST),
             data=record.serialize()
         )
         return Record(obj=record.obj, **data)
@@ -40,7 +50,8 @@ class RecordsManager:
         Updates an existing record in the Custodian
         """
         data = self.client.execute(
-            command=Command(name=self._get_record_command_name(record.obj, record.get_pk()), method=COMMAND_METHOD.PUT),
+            command=Command(name=self._get_single_record_command_name(record.obj, record.get_pk()),
+                            method=COMMAND_METHOD.PUT),
             data=record.serialize()
         )
         record.__init__(obj=record.obj, **data)
@@ -54,7 +65,7 @@ class RecordsManager:
                 """
         self.client.execute(
             command=Command(
-                name=self._get_record_command_name(record.obj, record.get_pk()),
+                name=self._get_single_record_command_name(record.obj, record.get_pk()),
                 method=COMMAND_METHOD.DELETE
             )
         )
@@ -69,11 +80,32 @@ class RecordsManager:
         """
         try:
             data = self.client.execute(
-                command=Command(name=self._get_record_command_name(obj, record_id), method=COMMAND_METHOD.GET)
+                command=Command(name=self._get_single_record_command_name(obj, record_id), method=COMMAND_METHOD.GET)
             )
             return Record(obj=obj, **data)
         except CommandExecutionFailureException:
             return None
 
-    def query(self, obj: Object):
-        return Query(obj)
+    def _query(self, obj: Object, query_string: str):
+        """
+        Performs an Custodian API call and returns a list of records
+        :param obj:
+        :param query_string:
+        :return:
+        """
+        data = self.client.execute(
+            command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.GET),
+            params={'q': query_string}
+        )
+        records = []
+        for record_data in data:
+            records.append(Record(obj=obj, **record_data))
+        return records
+
+    def query(self, obj: Object) -> Query:
+        """
+        Returns a Query object
+        :param obj:
+        :return:
+        """
+        return Query(obj, self)

@@ -70,17 +70,45 @@ class Q:
         return operator, field
 
 
+def mark_as_unevaluated(func):
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        self = args[0]
+        # mark as unevaluated only if no exception was raised
+        self._is_evaluated = False
+        self._result = None
+        return result
+
+    return wrapper
+
+
+def evaluate(func):
+    def wrapper(*args, **kwargs):
+        self = args[0]
+        if not self._is_evaluated:
+            self._evaluate()
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
 class Query:
     _q_objects = None
     _orderings = None
     _limit = None
+    _is_evaluated = None
+    _result = None
 
-    def __init__(self, obj: Object):
-        self.obj = obj
+    def __init__(self, obj: Object, manager):
+        self._obj = obj
+        self._manager = manager
         self._q_objects = []
         self._orderings = []
         self._limit = None
+        self._is_evaluated = False
+        self._result = None
 
+    @mark_as_unevaluated
     def filter(self, q_object: Q = None, **kwargs):
         """
         Applies filters to the current query
@@ -116,6 +144,7 @@ class Query:
             query_string = ', '.join([query_string, limit_expression])
         return query_string
 
+    @mark_as_unevaluated
     def order_by(self, *orderings: str):
         """
         Sets ordering to the Query object.
@@ -132,6 +161,7 @@ class Query:
             self._orderings.append(ordering)
         return self
 
+    @mark_as_unevaluated
     def __getitem__(self, item):
         if self._limit:
             raise Exception('Cannot limit already limited query')
@@ -143,3 +173,20 @@ class Query:
             limit = 1
         self._limit = (offset, limit)
         return self
+
+    @evaluate
+    def __iter__(self):
+        return self._result.__iter__()
+
+    @evaluate
+    def __len__(self):
+        return self._result.__len__()
+
+    def _evaluate(self):
+        """
+        Evaluates the query using RecordsManager
+        """
+        records = self._manager._query(self._obj, self.to_string())
+        self._result = records
+        self._is_evaluated = True
+        return self._result

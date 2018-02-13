@@ -1,6 +1,7 @@
 import pytest
 from hamcrest import *
 
+from custodian.client import Client
 from custodian.exceptions import QueryException
 from custodian.objects.model import Object
 from custodian.records.query import Q, Query
@@ -32,7 +33,7 @@ def test_inverted_q():
 
 
 def test_query(person_object: Object):
-    query = Query(person_object).filter((Q(age__gt=18) | Q(age__lt=53)) & Q(is_active__eq=True)) \
+    query = Query(person_object, None).filter((Q(age__gt=18) | Q(age__lt=53)) & Q(is_active__eq=True)) \
         .filter(address__city__name__eq='St. Petersburg')
     assert_that(
         query.to_string(),
@@ -41,15 +42,24 @@ def test_query(person_object: Object):
 
 
 def test_query_ordering(person_object: Object):
-    query = Query(person_object).filter(is_active__eq=True).order_by('person__last_name', '-person__phone_number')
+    query = Query(person_object, None).filter(is_active__eq=True).order_by('person__last_name', '-person__phone_number')
     assert_that(query.to_string(), contains_string('sort(+person.last_name, -person.phone_number)'))
 
 
 def test_query_slicing(person_object: Object):
-    query = Query(person_object).filter(is_active__eq=True)[50:100]
+    query = Query(person_object, None).filter(is_active__eq=True)[50:100]
     assert_that(query.to_string(), contains_string('limit(50, 50)'))
 
 
 def test_query_access_by_index(person_object: Object):
-    query = Query(person_object).filter(is_active__eq=True)[141]
+    query = Query(person_object, None).filter(is_active__eq=True)[141]
     assert_that(query.to_string(), contains_string('limit(141, 1)'))
+
+
+def test_query_resets_evaluated_result_on_query_modifications(person_object: Object):
+    client = Client(server_url='http://mocked/custodian')
+    query = Query(person_object, client.records).filter(is_active__eq=True)
+    query._is_evaluated = True
+    assert_that(query._is_evaluated)
+    query = query.filter(client__first_name__eq='Ivan')
+    assert_that(not query._is_evaluated)
