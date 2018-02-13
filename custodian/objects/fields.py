@@ -1,3 +1,5 @@
+from typing import NamedTuple
+
 from custodian.exceptions import FieldDoesNotExistException
 
 
@@ -64,8 +66,30 @@ class ArrayField(BaseField):
 
 
 class ObjectField(BaseField):
-    type: str = 'bool'
+    type: str = 'object'
     cast_func = lambda x: x
+
+
+class RelatedObjectField(BaseField):
+    LINK_TYPES = NamedTuple('LINK_TYPE', [('INNER', str), ('OUTER', str)])(INNER='inner', OUTER='outer')
+
+    type: str = object
+    _many: bool = False
+
+    def __init__(self, name: str, obj, link_type: str, optional: bool = False, many=False):
+        self._link_type = link_type
+        self._obj = obj
+        self._many = many
+        super(RelatedObjectField, self).__init__(name, optional, default=None)
+
+    def serialize(self):
+        return {
+            'name': self.name,
+            'type': 'object' if not self._many else 'array',
+            'optional': self.optional,
+            'linkMeta': self._obj.name,
+            'linkType': self._link_type
+        }
 
 
 class FieldsManager:
@@ -80,7 +104,7 @@ class FieldsManager:
     @classmethod
     def get_field_by_type(cls, field_type: str):
         """
-        Returns field associated with given type
+        Returns field associated with the given type
         :param field_type:
         :return:
         """
