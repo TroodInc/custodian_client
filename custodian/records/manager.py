@@ -2,7 +2,7 @@ from typing import Tuple
 
 from custodian.command import Command, COMMAND_METHOD
 from custodian.exceptions import CommandExecutionFailureException
-from custodian.objects.model import Object
+from custodian.objects import Object
 from custodian.records.model import Record
 from custodian.records.query import Query
 

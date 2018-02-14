@@ -1,7 +1,7 @@
 import pytest
 
 from custodian.objects.fields import NumberField, StringField, BooleanField
-from custodian.objects.model import Object
+from custodian.objects import Object
 from custodian.records.model import Record
 
 

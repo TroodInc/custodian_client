@@ -1,7 +1,7 @@
 from hamcrest import *
 
 from custodian.objects.fields import NumberField, StringField, BooleanField, RelatedObjectField
-from custodian.objects.model import Object
+from custodian.objects import Object
 
 
 def test_object_serializes_itself():

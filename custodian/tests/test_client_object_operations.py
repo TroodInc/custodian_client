@@ -4,7 +4,7 @@ from hamcrest import *
 
 from custodian.client import Client
 from custodian.exceptions import CommandExecutionFailureException
-from custodian.objects.model import Object
+from custodian.objects import Object
 
 
 def test_client_raises_exception_on_failed_api_call(person_object: Object):

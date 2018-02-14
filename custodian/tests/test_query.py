@@ -3,7 +3,7 @@ from hamcrest import *
 
 from custodian.client import Client
 from custodian.exceptions import QueryException
-from custodian.objects.model import Object
+from custodian.objects import Object
 from custodian.records.query import Q, Query
 
 

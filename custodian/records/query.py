@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 from custodian.exceptions import QueryException
-from custodian.objects.model import Object
+from custodian.objects import Object
 
 
 class Q:

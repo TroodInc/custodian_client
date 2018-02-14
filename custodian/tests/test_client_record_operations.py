@@ -2,7 +2,7 @@ import requests_mock
 from hamcrest import *
 
 from custodian.client import Client
-from custodian.objects.model import Object
+from custodian.objects import Object
 from custodian.records.model import Record
 
 

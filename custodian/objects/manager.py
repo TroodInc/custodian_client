@@ -1,5 +1,5 @@
 from custodian.command import Command, COMMAND_METHOD
-from custodian.objects.model import Object
+from custodian.objects import Object
 
 
 class ObjectsManager:
