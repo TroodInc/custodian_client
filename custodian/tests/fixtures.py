@@ -1,8 +1,15 @@
+import os
 import pytest
 
+from custodian.client import Client
 from custodian.objects.fields import NumberField, StringField, BooleanField
 from custodian.objects import Object
 from custodian.records.model import Record
+
+
+@pytest.fixture
+def client():
+    return Client(server_url=os.environ['SERVER_URL'])
 
 
 @pytest.fixture

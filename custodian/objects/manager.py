@@ -24,7 +24,7 @@ class ObjectsManager:
         :return:
         """
         self.client.execute(
-            command=Command(name=self._base_command_name, method=COMMAND_METHOD.POST),
+            command=Command(name=self._base_command_name, method=COMMAND_METHOD.PUT),
             data=obj.serialize()
         )
         return obj

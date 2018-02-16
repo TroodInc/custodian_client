@@ -28,8 +28,14 @@ class Client:
         """
         url = '/'.join([self.server_url, command.name])
         response = getattr(requests, command.method)(url, json=data, params=params)
-        response_content = response.json()
-        if response_content['status'] == 'OK':
-            return response_content.get('data', None)
+        if response.content:
+            response_content = response.json()
+            if response_content['status'] == 'OK':
+                return response_content.get('data', None)
+            else:
+                raise CommandExecutionFailureException('Command execution failed')
         else:
-            raise CommandExecutionFailureException('Command execution failed')
+            if response.status_code == 204:
+                return None
+            else:
+                raise CommandExecutionFailureException('Command execution failed')

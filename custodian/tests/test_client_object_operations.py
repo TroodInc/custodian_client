@@ -7,20 +7,16 @@ from custodian.exceptions import CommandExecutionFailureException
 from custodian.objects import Object
 
 
-def test_client_raises_exception_on_failed_api_call(person_object: Object):
-    client = Client(server_url='http://mocked/custodian')
+def test_client_raises_exception_on_failed_api_call(person_object: Object, client: Client):
     with pytest.raises(CommandExecutionFailureException):
         with requests_mock.Mocker() as mocker:
             mocker.post('http://mocked/custodian/meta', json={'status': 'Fail'})
             client.objects.create(person_object)
 
 
-def test_client_makes_correct_request_on_object_creation(person_object: Object):
-    client = Client(server_url='http://mocked/custodian')
-    with requests_mock.Mocker() as mocker:
-        mocker.post('http://mocked/custodian/meta', json={'status': 'OK'})
-        obj = client.objects.create(person_object)
-        assert_that(obj, is_(instance_of(Object)))
+def test_client_makes_correct_request_on_object_creation(person_object: Object, client: Client):
+    obj = client.objects.create(person_object)
+    assert_that(obj, is_(instance_of(Object)))
 
 
 def test_client_makes_correct_request_on_object_update(person_object: Object):
