@@ -7,7 +7,7 @@ from custodian.objects import Object
 from custodian.records.model import Record
 
 
-@pytest.fixture
+@pytest.fixture(scope='session')
 def client():
     return Client(server_url=os.environ['SERVER_URL'])
 
@@ -17,7 +17,7 @@ def person_object():
     return Object(
         name='person',
         key='id',
-        cas=True,
+        cas=False,
         fields=[
             NumberField(name='id', optional=True),
             StringField(name='name'),
