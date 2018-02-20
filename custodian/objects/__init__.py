@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from typing import List
 
 from custodian.objects.fields import BaseField, FieldsManager
@@ -13,14 +14,14 @@ class Object:
         self.name = name
         self.key = key
         self.cas = cas
-        self.fields = fields
+        self.fields = OrderedDict([(x.name, x) for x in fields])
 
     def serialize(self):
         return {
             'name': self.name,
             'key': self.key,
             'cas': self.cas,
-            'fields': [x.serialize() for x in self.fields]
+            'fields': [x.serialize() for x in self.fields.values()]
         }
 
     @classmethod

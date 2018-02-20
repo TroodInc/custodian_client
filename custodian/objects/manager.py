@@ -1,4 +1,5 @@
 from custodian.command import Command, COMMAND_METHOD
+from custodian.exceptions import CommandExecutionFailureException
 from custodian.objects import Object
 
 
@@ -36,7 +37,7 @@ class ObjectsManager:
         :return:
         """
         self.client.execute(
-            command=Command(name=self.get_object_command_name(obj.name), method=COMMAND_METHOD.PUT),
+            command=Command(name=self.get_object_command_name(obj.name), method=COMMAND_METHOD.POST),
             data=obj.serialize()
         )
         return obj
@@ -58,15 +59,23 @@ class ObjectsManager:
         Retrieves existing object from Custodian by name
         :param object_name:
         """
-        data = self.client.execute(
-            command=Command(name=self.get_object_command_name(object_name), method=COMMAND_METHOD.GET)
-        )
-        return Object.deserialize(data)
+        try:
+            data = self.client.execute(
+                command=Command(name=self.get_object_command_name(object_name), method=COMMAND_METHOD.GET)
+            )
+            return Object.deserialize(data)
+        except CommandExecutionFailureException:
+            return None
 
     def get_all(self):
         """
         Retrieves a list of existing objects from Custodian
         :return:
         """
-        # TODO: Implement this method
-        raise NotImplementedError
+        data = self.client.execute(
+            command=Command(name=self.get_object_command_name(''), method=COMMAND_METHOD.GET)
+        )
+        if data:
+            return [Object.deserialize(object_data) for object_data in data]
+        else:
+            return []
