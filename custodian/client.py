@@ -31,11 +31,11 @@ class Client:
         if response.content:
             response_content = response.json()
             if response_content['status'] == 'OK':
-                return response_content.get('data', None)
+                return response_content.get('data', None), True
             else:
-                raise CommandExecutionFailureException('Command execution failed')
+                return response_content.get('data', None), False
         else:
             if response.status_code == 204:
-                return None
+                return None, True
             else:
                 raise CommandExecutionFailureException('Command execution failed')
