@@ -35,7 +35,7 @@ class BaseField:
         else:
             if value is None:
                 if self.optional:
-                    value = self.get_default_value()
+                    return None
                 else:
                     raise ValueError('"{}" field is required'.format(self.name))
             return self.cast_func(value)
