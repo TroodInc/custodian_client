@@ -16,9 +16,15 @@ class Record:
             setattr(self, field.name, value)
 
     def serialize(self):
+        """
+        Serialize record values, empty values are skipped
+        :return:
+        """
         data = {}
         for field_name, field in self.obj.fields.items():
-            data[field.name] = field.to_raw(getattr(self, field.name))
+            raw_value = field.to_raw(getattr(self, field.name))
+            if raw_value:
+                data[field.name] = raw_value
         return data
 
     def __repr__(self):
