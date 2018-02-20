@@ -11,13 +11,13 @@ class Record:
         :param kwargs:
         """
         self.obj = obj
-        for field in obj.fields:
+        for field in obj.fields.values():
             value = kwargs.get(field.name, None)
             setattr(self, field.name, value)
 
     def serialize(self):
         data = {}
-        for field in self.obj.fields:
+        for field_name, field in self.obj.fields.items():
             data[field.name] = field.to_raw(getattr(self, field.name))
         return data
 

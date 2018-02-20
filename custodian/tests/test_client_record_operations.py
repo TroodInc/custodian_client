@@ -6,25 +6,23 @@ from custodian.objects import Object
 from custodian.records.model import Record
 
 
-def test_client_retrieves_existing_record(person_record: Record):
-    client = Client(server_url='http://mocked/custodian')
+def test_client_retrieves_existing_record(person_record: Record, client: Client):
     with requests_mock.Mocker() as mocker:
         mocker.get(
-            'http://mocked/custodian/data/single/{}/{}'.format(person_record.obj.name, person_record.get_pk()),
+            '/'.join([client.server_url, 'data/single/{}/{}'.format(person_record.obj.name, person_record.get_pk())]),
             json={
                 'status': 'OK',
                 'data': person_record.serialize()
             }
         )
-        record = client.records.get(person_record.obj, person_record.id)
+        record = client.records.get(person_record.obj, person_record.get_pk())
         assert_that(record, is_(instance_of(Record)))
 
 
-def test_client_returns_none_for_nonexistent_record(person_record: Record):
-    client = Client(server_url='http://mocked/custodian')
+def test_client_returns_none_for_nonexistent_record(person_record: Record, client: Client):
     with requests_mock.Mocker() as mocker:
         mocker.get(
-            'http://mocked/custodian/data/single/{}/{}'.format(person_record.obj.name, person_record.get_pk()),
+            '/'.join([client.server_url, 'data/single/{}/{}'.format(person_record.obj.name, person_record.get_pk())]),
             json={
                 'status': 'FAIL',
                 'data': {}
@@ -34,15 +32,14 @@ def test_client_returns_none_for_nonexistent_record(person_record: Record):
         assert_that(record, is_(None))
 
 
-def test_client_returns_new_record_on_record_creation(person_record: Record):
+def test_client_returns_new_record_on_record_creation(person_record: Record, client: Client):
     person_record.id = None
     assert_that(person_record.exists(), is_not(True))
-    client = Client(server_url='http://mocked/custodian')
     record_data = person_record.serialize()
     record_data['id'] = 45
     with requests_mock.Mocker() as mocker:
         mocker.post(
-            'http://mocked/custodian/data/single/{}'.format(person_record.obj.name),
+            '/'.join([client.server_url, 'data/single/{}'.format(person_record.obj.name)]),
             json={
                 'status': 'OK',
                 'data': record_data
@@ -54,13 +51,12 @@ def test_client_returns_new_record_on_record_creation(person_record: Record):
         assert_that(record.id, equal_to(45))
 
 
-def test_client_deletes(person_record: Record):
+def test_client_deletes(person_record: Record, client: Client):
     assert_that(person_record.exists())
-    client = Client(server_url='http://mocked/custodian')
     record_data = person_record.serialize()
     with requests_mock.Mocker() as mocker:
         mocker.delete(
-            'http://mocked/custodian/data/single/{}/{}'.format(person_record.obj.name, person_record.get_pk()),
+            '/'.join([client.server_url, 'data/single/{}/{}'.format(person_record.obj.name, person_record.get_pk())]),
             json={
                 'status': 'OK',
                 'data': record_data
@@ -70,13 +66,12 @@ def test_client_deletes(person_record: Record):
         assert_that(person_record.exists(), is_not(True))
 
 
-def test_client_returns_updated_record_on_record_update(person_record: Record):
-    client = Client(server_url='http://mocked/custodian')
+def test_client_returns_updated_record_on_record_update(person_record: Record, client: Client):
     record_data = person_record.serialize()
     record_data['is_active'] = False
     with requests_mock.Mocker() as mocker:
         mocker.put(
-            'http://mocked/custodian/data/single/{}/{}'.format(person_record.obj.name, person_record.get_pk()),
+            '/'.join([client.server_url, 'data/single/{}/{}'.format(person_record.obj.name, person_record.get_pk())]),
             json={
                 'status': 'OK',
                 'data': record_data
@@ -88,12 +83,11 @@ def test_client_returns_updated_record_on_record_update(person_record: Record):
         assert_that(record.is_active, is_(False))
 
 
-def test_client_returns_iterable_of_records_on_bulk_query(person_object: Object, person_record: Record):
-    client = Client(server_url='http://mocked/custodian')
+def test_client_returns_iterable_of_records_on_bulk_query(person_object: Object, person_record: Record, client: Client):
     query = client.records.query(person_object).filter(address__city_id__eq=45)
     with requests_mock.Mocker() as mocker:
         mocker.get(
-            'http://mocked/custodian/data/bulk/{}'.format(person_object.name),
+            '/'.join([client.server_url, 'data/bulk/{}'.format(person_object.name)]),
             json={
                 'status': 'OK',
                 'data': [
@@ -108,7 +102,7 @@ def test_client_returns_iterable_of_records_on_bulk_query(person_object: Object,
             assert_that(record, instance_of(Record))
 
 
-def test_client_returns_list_of_records_on_bulk_create(person_object: Object):
+def test_client_returns_list_of_records_on_bulk_create(person_object: Object, client: Client):
     records_to_create = [
         Record(
             obj=person_object,
@@ -122,10 +116,9 @@ def test_client_returns_list_of_records_on_bulk_create(person_object: Object):
         )
     ]
 
-    client = Client(server_url='http://mocked/custodian')
     with requests_mock.Mocker() as mocker:
         mocker.post(
-            'http://mocked/custodian/data/bulk/{}'.format(person_object.name),
+            '/'.join([client.server_url, 'data/bulk/{}'.format(person_object.name)]),
             json={
                 'status': 'OK',
                 'data': [
@@ -140,7 +133,7 @@ def test_client_returns_list_of_records_on_bulk_create(person_object: Object):
         assert_that(created_records, equal_to(records_to_create))
 
 
-def test_client_returns_list_of_records_on_bulk_update(person_object: Object):
+def test_client_returns_list_of_records_on_bulk_update(person_object: Object, client: Client):
     records_to_update = [
         Record(
             obj=person_object,
@@ -156,10 +149,9 @@ def test_client_returns_list_of_records_on_bulk_update(person_object: Object):
         )
     ]
 
-    client = Client(server_url='http://mocked/custodian')
     with requests_mock.Mocker() as mocker:
         mocker.put(
-            'http://mocked/custodian/data/bulk/{}'.format(person_object.name),
+            '/'.join([client.server_url, 'data/bulk/{}'.format(person_object.name)]),
             json={
                 'status': 'OK',
                 'data': [x.serialize() for x in records_to_update]
@@ -172,7 +164,7 @@ def test_client_returns_list_of_records_on_bulk_update(person_object: Object):
         assert_that(updated_records, equal_to(records_to_update))
 
 
-def test_client_returns_list_of_records_without_pk_value_on_bulk_delete(person_object: Object):
+def test_client_returns_list_of_records_without_pk_value_on_bulk_delete(person_object: Object, client: Client):
     records_to_delete = [
         Record(
             obj=person_object,
@@ -188,10 +180,9 @@ def test_client_returns_list_of_records_without_pk_value_on_bulk_delete(person_o
         )
     ]
 
-    client = Client(server_url='http://mocked/custodian')
     with requests_mock.Mocker() as mocker:
         mocker.delete(
-            'http://mocked/custodian/data/bulk/{}'.format(person_object.name),
+            '/'.join([client.server_url, 'data/bulk/{}'.format(person_object.name)]),
             json={
                 'status': 'OK'
             }
