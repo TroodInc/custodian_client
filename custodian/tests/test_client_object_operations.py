@@ -8,13 +8,6 @@ from custodian.objects import Object
 from custodian.objects.fields import NumberField, StringField, BooleanField
 
 
-def test_client_raises_exception_on_failed_api_call(person_object: Object, client: Client):
-    with pytest.raises(CommandExecutionFailureException):
-        with requests_mock.Mocker() as mocker:
-            mocker.put('/'.join([client.server_url, 'meta']), json={'status': 'Fail'})
-            client.objects.create(person_object)
-
-
 def test_client_makes_correct_request_on_object_creation(person_object: Object, client: Client):
     with requests_mock.Mocker() as mocker:
         mocker.put('/'.join([client.server_url, 'meta']), json={'status': 'OK'})
@@ -90,18 +83,9 @@ class TestCustodianIntegrationSeries:
         :param client:
         """
         assert_that('last_name' not in person_object.fields.keys())
-        updated_person_obj = Object(
-            name='person',
-            key='id',
-            cas=False,
-            fields=[
-                NumberField(name='id', optional=True),
-                StringField(name='name'),
-                BooleanField(name='is_active'),
-                StringField(name='last_name'),
-            ]
-        )
-        client.objects.update(updated_person_obj)
+
+        person_object.fields['last_name'] = StringField(name='last_name')
+        client.objects.update(person_object)
         retrieved_person_obj = client.objects.get(person_object.name)
         assert_that(retrieved_person_obj.fields, has_key('last_name'))
 

@@ -19,7 +19,7 @@ def person_object():
         key='id',
         cas=False,
         fields=[
-            NumberField(name='id', optional=True),
+            NumberField(name='id', optional=True, default={'func': 'nextval'}),
             StringField(name='name'),
             BooleanField(name='is_active')
         ]
@@ -28,4 +28,4 @@ def person_object():
 
 @pytest.fixture
 def person_record(person_object):
-    return Record(obj=person_object, id=23, name='Ivan Petrov', is_active=True)
+    return Record(obj=person_object, id=23, name='Ivan', is_active=True)
