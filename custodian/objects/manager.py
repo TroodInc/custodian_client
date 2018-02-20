@@ -1,5 +1,5 @@
 from custodian.command import Command, COMMAND_METHOD
-from custodian.exceptions import CommandExecutionFailureException
+from custodian.exceptions import CommandExecutionFailureException, ObjectUpdateException
 from custodian.objects import Object
 
 
@@ -36,11 +36,14 @@ class ObjectsManager:
         :param obj:
         :return:
         """
-        self.client.execute(
+        data, ok = self.client.execute(
             command=Command(name=self.get_object_command_name(obj.name), method=COMMAND_METHOD.POST),
             data=obj.serialize()
         )
-        return obj
+        if ok:
+            return obj
+        else:
+            raise ObjectUpdateException(data.get('msg'))
 
     def delete(self, obj: Object) -> Object:
         """
@@ -75,7 +78,7 @@ class ObjectsManager:
         data, ok = self.client.execute(
             command=Command(name=self.get_object_command_name(''), method=COMMAND_METHOD.GET)
         )
-        if ok:
+        if ok and data:
             return [Object.deserialize(object_data) for object_data in data]
         else:
             return []

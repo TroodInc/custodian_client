@@ -12,3 +12,11 @@ class QueryException(Exception):
 
 class ImproperlyConfiguredFieldException(Exception):
     pass
+
+
+class RecordAlreadyExistsException(CommandExecutionFailureException):
+    pass
+
+
+class ObjectUpdateException(CommandExecutionFailureException):
+    pass

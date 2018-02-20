@@ -85,13 +85,10 @@ class RecordsManager:
         :param record_id:
         :return:
         """
-        try:
-            data, _ = self.client.execute(
-                command=Command(name=self._get_single_record_command_name(obj, record_id), method=COMMAND_METHOD.GET)
-            )
-            return Record(obj=obj, **data)
-        except CommandExecutionFailureException:
-            return None
+        data, ok = self.client.execute(
+            command=Command(name=self._get_single_record_command_name(obj, record_id), method=COMMAND_METHOD.GET)
+        )
+        return Record(obj=obj, **data) if ok else None
 
     def _query(self, obj: Object, query_string: str):
         """
