@@ -60,10 +60,10 @@ class ObjectsManager:
         :param object_name:
         """
         try:
-            data = self.client.execute(
+            data, ok = self.client.execute(
                 command=Command(name=self.get_object_command_name(object_name), method=COMMAND_METHOD.GET)
             )
-            return Object.deserialize(data)
+            return Object.deserialize(data) if ok else None
         except CommandExecutionFailureException:
             return None
 
@@ -72,10 +72,10 @@ class ObjectsManager:
         Retrieves a list of existing objects from Custodian
         :return:
         """
-        data = self.client.execute(
+        data, ok = self.client.execute(
             command=Command(name=self.get_object_command_name(''), method=COMMAND_METHOD.GET)
         )
-        if data:
+        if ok:
             return [Object.deserialize(object_data) for object_data in data]
         else:
             return []

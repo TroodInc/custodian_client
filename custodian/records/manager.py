@@ -1,7 +1,7 @@
 from typing import Tuple
 
 from custodian.command import Command, COMMAND_METHOD
-from custodian.exceptions import CommandExecutionFailureException
+from custodian.exceptions import CommandExecutionFailureException, RecordAlreadyExistsException
 from custodian.objects import Object
 from custodian.records.model import Record
 from custodian.records.query import Query
@@ -41,19 +41,24 @@ class RecordsManager:
         :param record:
         :return:
         """
-        data = self.client.execute(
-            command=Command(name=self._get_single_record_command_name(record.obj), method=COMMAND_METHOD.POST),
+        data, ok = self.client.execute(
+            command=Command(name=self._get_single_record_command_name(record.obj), method=COMMAND_METHOD.PUT),
             data=record.serialize()
         )
-        return Record(obj=record.obj, **data)
+        if ok:
+            return Record(obj=record.obj, **data)
+        elif data.get('msg', '').find('duplicate'):
+            raise RecordAlreadyExistsException
+        else:
+            raise CommandExecutionFailureException(data.get('msg'))
 
     def update(self, record: Record):
         """
         Updates an existing record in the Custodian
         """
-        data = self.client.execute(
+        data, _ = self.client.execute(
             command=Command(name=self._get_single_record_command_name(record.obj, record.get_pk()),
-                            method=COMMAND_METHOD.PUT),
+                            method=COMMAND_METHOD.POST),
             data=record.serialize()
         )
         record.__init__(obj=record.obj, **data)
@@ -81,7 +86,7 @@ class RecordsManager:
         :return:
         """
         try:
-            data = self.client.execute(
+            data, _ = self.client.execute(
                 command=Command(name=self._get_single_record_command_name(obj, record_id), method=COMMAND_METHOD.GET)
             )
             return Record(obj=obj, **data)
@@ -95,7 +100,7 @@ class RecordsManager:
         :param query_string:
         :return:
         """
-        data = self.client.execute(
+        data, _ = self.client.execute(
             command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.GET),
             params={'q': query_string}
         )
@@ -131,7 +136,7 @@ class RecordsManager:
         """
         self._check_records_have_same_object(records)
         obj = records[0].obj
-        data = self.client.execute(
+        data, _ = self.client.execute(
             command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.POST),
             data=[record.serialize() for record in records]
         )
@@ -145,7 +150,7 @@ class RecordsManager:
         """
         self._check_records_have_same_object(records)
         obj = records[0].obj
-        data = self.client.execute(
+        data, _ = self.client.execute(
             command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.PUT),
             data=[record.serialize() for record in records]
         )
