@@ -5,7 +5,7 @@ from hamcrest import *
 from custodian.client import Client
 from custodian.exceptions import CommandExecutionFailureException
 from custodian.objects import Object
-from custodian.objects.fields import NumberField, StringField, BooleanField
+from custodian.objects.fields import NumberField, StringField, BooleanField, RelatedObjectField
 
 
 def test_client_makes_correct_request_on_object_creation(person_object: Object, client: Client):
@@ -89,12 +89,50 @@ class TestCustodianIntegrationSeries:
         retrieved_person_obj = client.objects.get(person_object.name)
         assert_that(retrieved_person_obj.fields, has_key('last_name'))
 
-    def test_object_is_deleted(self, person_object: Object, client: Client):
+    def test_related_object_is_created(self, person_object: Object, client: Client):
         """
-        Remove the object from the database and verify it not longer exists in the database
+        Create a new object, which has a foreign key to the Person object
         :param person_object:
         :param client:
         """
-        assert_that(client.objects.get(person_object.name), instance_of(Object))
-        client.objects.delete(person_object)
-        assert_that(client.objects.get(person_object.name), is_(None))
+        account_object = Object(
+            name='account',
+            fields=[
+                NumberField(name='id'),
+                StringField(name='number'),
+                RelatedObjectField(
+                    name='person',
+                    obj=person_object,
+                    link_type=RelatedObjectField.LINK_TYPES.INNER
+                )
+            ],
+            key='id',
+            cas=False
+        )
+        client.objects.create(account_object)
+        account_object = client.objects.get(account_object.name)
+        assert_that(account_object, instance_of(Object))
+        assert_that(account_object.fields['person'], instance_of(RelatedObjectField))
+
+    def test_object_is_deleted(self, person_object: Object, client: Client):
+        """
+        Remove the object from the database and verify it not longer exists in the database
+        :param client:
+        """
+        account_object = Object(
+            name='account',
+            fields=[
+                NumberField(name='id'),
+                StringField(name='number'),
+                RelatedObjectField(
+                    name='person',
+                    obj=person_object,
+                    link_type=RelatedObjectField.LINK_TYPES.INNER
+                )
+            ],
+            key='id',
+            cas=False
+        )
+        assert_that(client.objects.get('account'), instance_of(Object))
+        client.objects.delete(account_object)
+        assert_that(client.objects.get(account_object.name), is_(None))

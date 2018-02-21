@@ -20,3 +20,7 @@ class RecordAlreadyExistsException(CommandExecutionFailureException):
 
 class ObjectUpdateException(CommandExecutionFailureException):
     pass
+
+
+class ObjectCreateException(CommandExecutionFailureException):
+    pass

@@ -73,11 +73,11 @@ class ObjectField(BaseField):
 class RelatedObjectField(BaseField):
     LINK_TYPES = NamedTuple('LINK_TYPE', [('INNER', str), ('OUTER', str)])(INNER='inner', OUTER='outer')
 
-    type: str = object
+    type: str = 'relatedObject'
     _many: bool = False
 
     def __init__(self, name: str, obj, link_type: str, optional: bool = False, outer_link_field: str = None,
-                 many=False):
+                 many=False, **kwargs):
         if link_type == self.LINK_TYPES.OUTER and outer_link_field is None:
             raise ImproperlyConfiguredFieldException('"outer_link_field" must be specified for "outer" link type')
 
@@ -107,7 +107,8 @@ class FieldsManager:
         StringField.type: StringField,
         BooleanField.type: BooleanField,
         ArrayField.type: ArrayField,
-        ObjectField.type: ObjectField
+        ObjectField.type: ObjectField,
+        RelatedObjectField.type: RelatedObjectField
     }
 
     @classmethod

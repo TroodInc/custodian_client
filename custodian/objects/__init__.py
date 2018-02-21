@@ -23,8 +23,3 @@ class Object:
             'cas': self.cas,
             'fields': [x.serialize() for x in self.fields.values()]
         }
-
-    @classmethod
-    def deserialize(cls, data):
-        data['fields'] = [FieldsManager.get_field_by_type(x['type'])(**x) for x in data['fields']]
-        return Object(**data)
