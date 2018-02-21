@@ -114,7 +114,7 @@ class RecordsManager:
         """
         return Query(obj, self)
 
-    def _check_records_have_same_object(self, records: Tuple[Record]):
+    def _check_records_have_same_object(self, *records: Record):
         """
         Bulk operations are permitted only for one object at time
         :param records:
@@ -131,24 +131,27 @@ class RecordsManager:
         :param records:
         :return:
         """
-        self._check_records_have_same_object(records)
+        self._check_records_have_same_object(*records)
         obj = records[0].obj
-        data, _ = self.client.execute(
-            command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.POST),
+        data, ok = self.client.execute(
+            command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.PUT),
             data=[record.serialize() for record in records]
         )
-        for i in range(0, len(data)):
-            records[i].__init__(obj, **data[i])
-        return list(records)
+        if ok:
+            for i in range(0, len(data)):
+                records[i].__init__(obj, **data[i])
+            return list(records)
+        else:
+            raise CommandExecutionFailureException(data.get('msg'))
 
     def bulk_update(self, *records: Record):
         """
         :return:
         """
-        self._check_records_have_same_object(records)
+        self._check_records_have_same_object(*records)
         obj = records[0].obj
         data, _ = self.client.execute(
-            command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.PUT),
+            command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.POST),
             data=[record.serialize() for record in records]
         )
         for i in range(0, len(data)):
@@ -160,7 +163,7 @@ class RecordsManager:
         Deletes records from the Custodian
         :return:
         """
-        self._check_records_have_same_object(records)
+        self._check_records_have_same_object(*records)
         obj = records[0].obj
         self.client.execute(
             command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.DELETE),

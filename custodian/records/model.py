@@ -23,7 +23,7 @@ class Record:
         data = {}
         for field_name, field in self.obj.fields.items():
             raw_value = field.to_raw(getattr(self, field.name))
-            if raw_value:
+            if raw_value is not None:
                 data[field.name] = raw_value
         return data
 

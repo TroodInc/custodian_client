@@ -194,7 +194,7 @@ def test_client_returns_list_of_records_without_pk_value_on_bulk_delete(person_o
             assert_that(not record.exists())
 
 
-class TestCustodianIntegrationSeries:
+class TestCustodianSingleOperationsIntegrationSeries:
     def test_the_database_contains_person_object(self, client: Client, person_object: Object):
         """
         Remove any existing objects and create a new "Person" object
@@ -268,3 +268,52 @@ class TestCustodianIntegrationSeries:
         client.records.delete(person_record)
         assert_that(person_record.get_pk(), is_(None))
         assert_that(client.records.get(person_record.obj, pk), is_(None))
+
+
+class TestCustodianBulkOperationsIntegrationSeries:
+    def test_the_database_contains_person_object(self, client: Client, person_object: Object):
+        """
+        Remove any existing objects and create a new "Person" object
+        :param client:
+        """
+        for obj in client.objects.get_all():
+            client.objects.delete(obj)
+        client.objects.create(person_object)
+        assert_that(client.objects.get_all(), has_length(1))
+
+    def test_records_are_created(self, person_object: Object, client: Client):
+        """
+        Create two records and verify pk values are assigned
+        :param person_object:
+        :param client:
+        """
+        first_record = Record(obj=person_object, **{'name': 'Feodor', 'is_active': True})
+        second_record = Record(obj=person_object, **{'name': 'Victor', 'is_active': False})
+        client.records.bulk_create(first_record, second_record)
+        assert_that(first_record.get_pk(), instance_of(int))
+        assert_that(second_record.get_pk(), instance_of(int))
+        self._created_records = (first_record, second_record)
+
+    def test_records_are_updated(self, two_records, client: Client):
+        """
+        Update created records and verify updated values are set
+        :param person_object:
+        :param client:
+        """
+        assert_that(two_records[0].name, not_(equal_to('Petr')))
+        assert_that(two_records[1].is_active, is_(False))
+        two_records[0].name = 'Petr'
+        two_records[1].is_active = True
+        client.records.bulk_update(*two_records)
+        assert_that(two_records[0].name, equal_to('Petr'))
+        assert_that(two_records[1].is_active, is_(True))
+
+    def test_records_are_deleted(self, two_records, client: Client):
+        """
+        Delete created records and verify its pk values are None
+        :param person_object:
+        :param client:
+        """
+        client.records.bulk_delete(*two_records)
+        assert_that(two_records[0].get_pk(), is_(None))
+        assert_that(two_records[1].get_pk(), is_(None))

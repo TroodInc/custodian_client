@@ -29,3 +29,11 @@ def person_object():
 @pytest.fixture
 def person_record(person_object):
     return Record(obj=person_object, id=23, name='Ivan', is_active=True)
+
+
+@pytest.fixture()
+def two_records(client, person_object):
+    first_record = Record(obj=person_object, **{'name': 'Feodor', 'is_active': True})
+    second_record = Record(obj=person_object, **{'name': 'Victor', 'is_active': False})
+    client.records.bulk_create(first_record, second_record)
+    return first_record, second_record

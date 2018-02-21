@@ -33,7 +33,7 @@ class Client:
             if response_content['status'] == 'OK':
                 return response_content.get('data', None), True
             else:
-                return response_content.get('data', None), False
+                return response_content.get('error', None), False
         else:
             if response.status_code == 204:
                 return None, True
