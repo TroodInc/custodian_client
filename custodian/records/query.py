@@ -44,11 +44,11 @@ class Q:
         for key, value in self._query.items():
             operator, field = self._parse_key(key)
             value = self._normalize_value(value)
-            expressions.append('{}({}, {})'.format(operator, field, value))
+            expressions.append('{}({},{})'.format(operator, field, value))
         query_string = ', '.join(expressions)
         # and then apply logical operators
         for logical_expression in self._logical_expressions:
-            query_string = '{}({}, {})'.format(
+            query_string = '{}({},{})'.format(
                 logical_expression['operator'], query_string, logical_expression['query'].to_string()
             )
         # apply inversion operator
@@ -77,7 +77,7 @@ class Q:
         :return:
         """
         if isinstance(value, (list, tuple)):
-            return '({})'.format(', '.join([str(x) for x in value]))
+            return '({})'.format(','.join([str(x) for x in value]))
         return value
 
 
@@ -128,18 +128,21 @@ class Query:
         :return:
         """
         # queries
-        query_string = self._q_objects[0].to_string()
-        for q_object in self._q_objects[1:]:
-            query_string = '{}({}, {})'.format(
-                'and', query_string, q_object.to_string()
-            )
+        if self._q_objects:
+            query_string = self._q_objects[0].to_string()
+            for q_object in self._q_objects[1:]:
+                query_string = '{}({},{})'.format(
+                    'and', query_string, q_object.to_string()
+                )
+        else:
+            query_string = ''
         # ordering options
         if self._orderings:
             ordering_expression = 'sort({})'.format(', '.join(self._orderings))
             query_string = ', '.join([query_string, ordering_expression])
         # limit option
         if self._limit:
-            limit_expression = 'limit({}, {})'.format(self._limit[0], self._limit[1])
+            limit_expression = 'limit({},{})'.format(self._limit[0], self._limit[1])
             query_string = ', '.join([query_string, limit_expression])
         return query_string
 
@@ -161,17 +164,24 @@ class Query:
         return new_query
 
     def __getitem__(self, item):
+        """
+        If slice is used __getitem__ returns new query with offset-limit applied,
+        otherwise returns item by index
+        :param item:
+        :return:
+        """
         if self._limit:
             raise Exception('Cannot limit already limited query')
         new_query = QueryFactory.clone(self)
         if isinstance(item, slice):
             offset = item.start
             limit = item.stop - item.start
+            new_query._limit = (offset, limit)
+            return new_query
         else:
-            offset = item
-            limit = 1
-        new_query._limit = (offset, limit)
-        return new_query
+            if not self._is_evaluated:
+                self._evaluate()
+            return self._result[item]
 
     @evaluate
     def __iter__(self):

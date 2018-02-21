@@ -1,3 +1,5 @@
+from functools import reduce
+
 import requests
 
 from custodian.command import Command
@@ -17,6 +19,12 @@ class Client:
         self.records = self._records_manager_class(self)
         self.objects = self._objects_manager_class(self)
 
+    def _make_query_string(self, params: dict):
+        queries = []
+        for key, value in params.items():
+            queries.append('{}={}'.format(key, value))
+        return '&'.join(queries)
+
     def execute(self, command: Command, data: dict = None, params: dict = None):
         """
         Performs call to the Custodian server API
@@ -27,7 +35,7 @@ class Client:
         :raises CommandExecutionFailureException:
         """
         url = '/'.join([self.server_url, command.name])
-        response = getattr(requests, command.method)(url, json=data, params=params)
+        response = getattr(requests, command.method)(url, json=data, params=self._make_query_string(params or {}))
         if response.content:
             response_content = response.json()
             if response_content['status'] == 'OK':

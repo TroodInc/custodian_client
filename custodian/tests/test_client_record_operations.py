@@ -3,7 +3,7 @@ import requests_mock
 from hamcrest import *
 
 from custodian.client import Client
-from custodian.exceptions import CommandExecutionFailureException, RecordAlreadyExistsException
+from custodian.exceptions import RecordAlreadyExistsException
 from custodian.objects import Object
 from custodian.records.model import Record
 
@@ -109,17 +109,19 @@ def test_client_returns_list_of_records_on_bulk_create(person_object: Object, cl
         Record(
             obj=person_object,
             name='Ivan Petrov',
-            is_active=False
+            is_active=False,
+            age=42
         ),
         Record(
             obj=person_object,
             name='Nikolay Kozlov',
-            is_active=True
+            is_active=True,
+            age=36
         )
     ]
 
     with requests_mock.Mocker() as mocker:
-        mocker.post(
+        mocker.put(
             '/'.join([client.server_url, 'data/bulk/{}'.format(person_object.name)]),
             json={
                 'status': 'OK',
@@ -141,18 +143,20 @@ def test_client_returns_list_of_records_on_bulk_update(person_object: Object, cl
             obj=person_object,
             name='Ivan Petrov',
             is_active=False,
+            age=15,
             id=23
         ),
         Record(
             obj=person_object,
             name='Nikolay Kozlov',
             is_active=True,
+            age=44,
             id=34
         )
     ]
 
     with requests_mock.Mocker() as mocker:
-        mocker.put(
+        mocker.post(
             '/'.join([client.server_url, 'data/bulk/{}'.format(person_object.name)]),
             json={
                 'status': 'OK',
@@ -287,8 +291,8 @@ class TestCustodianBulkOperationsIntegrationSeries:
         :param person_object:
         :param client:
         """
-        first_record = Record(obj=person_object, **{'name': 'Feodor', 'is_active': True})
-        second_record = Record(obj=person_object, **{'name': 'Victor', 'is_active': False})
+        first_record = Record(obj=person_object, **{'name': 'Feodor', 'is_active': True, 'age': 23})
+        second_record = Record(obj=person_object, **{'name': 'Victor', 'is_active': False, 'age': 22})
         client.records.bulk_create(first_record, second_record)
         assert_that(first_record.get_pk(), instance_of(int))
         assert_that(second_record.get_pk(), instance_of(int))

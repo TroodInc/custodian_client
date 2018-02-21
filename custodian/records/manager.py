@@ -1,5 +1,3 @@
-from typing import Tuple
-
 from custodian.command import Command, COMMAND_METHOD
 from custodian.exceptions import CommandExecutionFailureException, RecordAlreadyExistsException
 from custodian.objects import Object
@@ -163,12 +161,15 @@ class RecordsManager:
         Deletes records from the Custodian
         :return:
         """
-        self._check_records_have_same_object(*records)
-        obj = records[0].obj
-        self.client.execute(
-            command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.DELETE),
-            data=[{obj.key: record.get_pk()} for record in records]
-        )
-        for record in records:
-            record.id = None
-        return list(records)
+        if records:
+            self._check_records_have_same_object(*records)
+            obj = records[0].obj
+            self.client.execute(
+                command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.DELETE),
+                data=[{obj.key: record.get_pk()} for record in records]
+            )
+            for record in records:
+                record.id = None
+            return list(records)
+        else:
+            return []
