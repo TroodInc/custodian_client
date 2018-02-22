@@ -1,5 +1,5 @@
 from custodian.command import Command, COMMAND_METHOD
-from custodian.exceptions import CommandExecutionFailureException, RecordAlreadyExistsException
+from custodian.exceptions import CommandExecutionFailureException, RecordAlreadyExistsException, ObjectUpdateException
 from custodian.objects import Object
 from custodian.records.model import Record
 from custodian.records.query import Query
@@ -148,13 +148,16 @@ class RecordsManager:
         """
         self._check_records_have_same_object(*records)
         obj = records[0].obj
-        data, _ = self.client.execute(
+        data, ok = self.client.execute(
             command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.POST),
             data=[record.serialize() for record in records]
         )
-        for i in range(0, len(data)):
-            records[i].__init__(obj, **data[i])
-        return list(records)
+        if ok:
+            for i in range(0, len(data)):
+                records[i].__init__(obj, **data[i])
+            return list(records)
+        else:
+            raise ObjectUpdateException(data.get('msg'))
 
     def bulk_delete(self, *records: Record):
         """

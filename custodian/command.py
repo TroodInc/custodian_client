@@ -17,3 +17,6 @@ class Command:
         assert method in COMMAND_METHOD.get_available_methods(), 'Method must be one of the COMMAND_METHOD`s attribute'
         self.name = name
         self.method = method
+
+    def __repr__(self):
+        return '<Command name="{}" method="{}">'.format(self.name, self.method)

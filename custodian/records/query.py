@@ -139,11 +139,16 @@ class Query:
         # ordering options
         if self._orderings:
             ordering_expression = 'sort({})'.format(', '.join(self._orderings))
-            query_string = ', '.join(filter(lambda x: bool(x), [query_string, ordering_expression]))
+            query_string = ','.join(filter(lambda x: bool(x), [query_string, ordering_expression]))
         # limit option
         if self._limit:
-            limit_expression = 'limit({},{})'.format(self._limit[0], self._limit[1])
-            query_string = ', '.join(filter(lambda x: bool(x), [query_string, limit_expression]))
+            if self._limit[0] == 0:
+                limit_expression = 'limit({})'.format(self._limit[1])
+            else:
+                limit_expression = 'limit({},{})'.format(self._limit[0], self._limit[1])
+            # currently Custodian can`t handle array values
+
+            query_string = ','.join(filter(lambda x: bool(x), [query_string, limit_expression]))
         return query_string
 
     def order_by(self, *orderings: str):
