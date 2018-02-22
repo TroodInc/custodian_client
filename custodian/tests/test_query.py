@@ -80,3 +80,8 @@ def test_query_filter_operation_does_not_affect_existing_query(person_object: Ob
     updated_query = base_query.filter(address__city__name__eq='St. Petersburg')
     assert_that(base_query.to_string(), equal_to('eq(is_active,True)'))
     assert_that(updated_query.to_string(), equal_to('and(eq(is_active,True),eq(address.city.name,St. Petersburg))'))
+
+
+def test_empty_query_with_limits_assembles_correct_expression(person_object: Object):
+    base_query = Query(person_object, None)[:100]
+    assert_that(base_query.to_string(), equal_to('limit(0,100)'))

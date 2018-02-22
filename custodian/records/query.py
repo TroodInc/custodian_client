@@ -139,11 +139,11 @@ class Query:
         # ordering options
         if self._orderings:
             ordering_expression = 'sort({})'.format(', '.join(self._orderings))
-            query_string = ', '.join([query_string, ordering_expression])
+            query_string = ', '.join(filter(lambda x: bool(x), [query_string, ordering_expression]))
         # limit option
         if self._limit:
             limit_expression = 'limit({},{})'.format(self._limit[0], self._limit[1])
-            query_string = ', '.join([query_string, limit_expression])
+            query_string = ', '.join(filter(lambda x: bool(x), [query_string, limit_expression]))
         return query_string
 
     def order_by(self, *orderings: str):
@@ -174,8 +174,8 @@ class Query:
             raise Exception('Cannot limit already limited query')
         new_query = QueryFactory.clone(self)
         if isinstance(item, slice):
-            offset = item.start
-            limit = item.stop - item.start
+            offset = item.start or 0
+            limit = item.stop - offset
             new_query._limit = (offset, limit)
             return new_query
         else:
