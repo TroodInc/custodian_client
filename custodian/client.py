@@ -1,11 +1,18 @@
-from functools import reduce
+import json
+import logging
 
 import requests
-
 from custodian.command import Command
 from custodian.exceptions import CommandExecutionFailureException
 from custodian.objects.manager import ObjectsManager
 from custodian.records.manager import RecordsManager
+
+handler = logging.StreamHandler()
+handler.setLevel(logging.DEBUG)
+
+logger = logging.getLogger(__name__)
+logger.addHandler(handler)
+logger.setLevel(logging.DEBUG)
 
 
 class Client:
@@ -35,6 +42,14 @@ class Client:
         :raises CommandExecutionFailureException:
         """
         url = '/'.join([self.server_url, command.name])
+
+        logger.debug('Making {} request: url = "{}", json = "{}", query = "{}"'.format(
+            command.method.upper(),
+            url,
+            json.dumps(data or {}),
+            self._make_query_string(
+                params or {}))
+        )
         response = getattr(requests, command.method)(url, json=data, params=self._make_query_string(params or {}))
         if response.content:
             response_content = response.json()
