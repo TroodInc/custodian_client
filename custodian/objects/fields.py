@@ -100,6 +100,21 @@ class RelatedObjectField(BaseField):
             **({'outerLinkField': self._outer_link_field} if self._outer_link_field else {})
         }
 
+    def to_raw(self, value):
+        return value
+
+    def from_raw(self, value):
+        """
+        This method implements a workaround for the Custodian`s bug: https://trood-cis.atlassian.net/browse/TB-15
+        TODO: remove this method as soon as the bug will be fixed
+        :param value:
+        :return:
+        """
+        if isinstance(value, dict):
+            return value.get(self._obj.key)
+        else:
+            return value
+
 
 class FieldsManager:
     fields = {
