@@ -24,3 +24,7 @@ class ObjectUpdateException(CommandExecutionFailureException):
 
 class ObjectCreateException(CommandExecutionFailureException):
     pass
+
+
+class FieldValidationException(Exception):
+    pass

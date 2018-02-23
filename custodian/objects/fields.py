@@ -50,6 +50,11 @@ class NumberField(BaseField):
     cast_func = float
 
 
+class IntegerField(BaseField):
+    type: str = 'number'
+    cast_func = int
+
+
 class StringField(BaseField):
     type: str = 'string'
     cast_func = str

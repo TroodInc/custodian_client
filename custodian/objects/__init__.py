@@ -23,3 +23,6 @@ class Object:
             'cas': self.cas,
             'fields': [x.serialize() for x in self.fields.values()]
         }
+
+    def __repr__(self):
+        return '<Custodian object "{}">'.format(self.name)
