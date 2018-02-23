@@ -2,18 +2,6 @@ class CommandExecutionFailureException(Exception):
     pass
 
 
-class FieldDoesNotExistException(Exception):
-    pass
-
-
-class QueryException(Exception):
-    pass
-
-
-class ImproperlyConfiguredFieldException(Exception):
-    pass
-
-
 class RecordAlreadyExistsException(CommandExecutionFailureException):
     pass
 
@@ -23,6 +11,22 @@ class ObjectUpdateException(CommandExecutionFailureException):
 
 
 class ObjectCreateException(CommandExecutionFailureException):
+    pass
+
+
+class ObjectDeletionException(CommandExecutionFailureException):
+    pass
+
+
+class FieldDoesNotExistException(Exception):
+    pass
+
+
+class QueryException(Exception):
+    pass
+
+
+class ImproperlyConfiguredFieldException(Exception):
     pass
 
 

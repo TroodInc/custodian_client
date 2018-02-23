@@ -1,5 +1,6 @@
 from custodian.command import Command, COMMAND_METHOD
-from custodian.exceptions import CommandExecutionFailureException, ObjectUpdateException, ObjectCreateException
+from custodian.exceptions import CommandExecutionFailureException, ObjectUpdateException, ObjectCreateException, \
+    ObjectDeletionException
 from custodian.objects import Object
 from custodian.objects.serializer import ObjectSerializer
 
@@ -60,12 +61,15 @@ class ObjectsManager:
         :return:
         """
 
-        self.client.execute(
+        data, ok = self.client.execute(
             command=Command(name=self.get_object_command_name(obj.name), method=COMMAND_METHOD.DELETE)
         )
-        if obj.name in self._cache:
-            del self._cache[obj.name]
-        return obj
+        if ok:
+            if obj.name in self._cache:
+                del self._cache[obj.name]
+            return obj
+        else:
+            raise ObjectDeletionException(data.get('msg'))
 
     def get(self, object_name):
         """
