@@ -1,3 +1,4 @@
+from custodian.exceptions import FieldValidationException
 from custodian.objects import Object
 
 
@@ -13,13 +14,25 @@ class Record:
         self.obj = obj
         for field in obj.fields.values():
             value = kwargs.get(field.name, None)
+            # convert value if it is set
+            if value:
+                value = field.from_raw(value)
             setattr(self, field.name, value)
+
+    def _validate_values(self):
+        """
+        Check record`s values
+        """
+        for field_name, field in self.obj.fields.items():
+            if not field.optional and getattr(self, field.name) is None:
+                raise FieldValidationException('Null value in "{}" violates not-null constraint'.format(field_name))
 
     def serialize(self):
         """
         Serialize record values, empty values are skipped
         :return:
         """
+        self._validate_values()
         data = {}
         for field_name, field in self.obj.fields.items():
             raw_value = field.to_raw(getattr(self, field.name))
