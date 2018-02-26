@@ -8,11 +8,8 @@ from custodian.objects.serializer import ObjectSerializer
 class ObjectsManager:
     _base_command_name = 'meta'
 
-    _cache = None
-
     def __init__(self, client):
         self.client = client
-        self._cache = {}
 
     @classmethod
     def get_object_command_name(cls, object_name: str):
@@ -49,7 +46,6 @@ class ObjectsManager:
             data=obj.serialize()
         )
         if ok:
-            self._cache[obj.name] = obj
             return obj
         else:
             raise ObjectUpdateException(data.get('msg'))
@@ -65,8 +61,6 @@ class ObjectsManager:
             command=Command(name=self.get_object_command_name(obj.name), method=COMMAND_METHOD.DELETE)
         )
         if ok:
-            if obj.name in self._cache:
-                del self._cache[obj.name]
             return obj
         else:
             raise ObjectDeletionException(data.get('msg'))
@@ -76,14 +70,11 @@ class ObjectsManager:
         Retrieves existing object from Custodian by name
         :param object_name:
         """
-        if not object_name in self._cache:
-            data, ok = self.client.execute(
-                command=Command(name=self.get_object_command_name(object_name), method=COMMAND_METHOD.GET)
-            )
-            obj = ObjectSerializer.deserialize(data, self) if ok else None
-            if obj:
-                self._cache[object_name] = obj
-        return self._cache.get(object_name)
+        data, ok = self.client.execute(
+            command=Command(name=self.get_object_command_name(object_name), method=COMMAND_METHOD.GET)
+        )
+        obj = ObjectSerializer.deserialize(data, self) if ok else None
+        return obj
 
     def get_all(self):
         """
