@@ -120,6 +120,14 @@ class RelatedObjectField(BaseField):
         else:
             return value
 
+    @property
+    def obj(self):
+        return self._obj
+
+    @property
+    def link_type(self):
+        return self._link_type
+
 
 class FieldsManager:
     fields = {
