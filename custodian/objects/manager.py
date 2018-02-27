@@ -2,6 +2,7 @@ from custodian.command import Command, COMMAND_METHOD
 from custodian.exceptions import CommandExecutionFailureException, ObjectUpdateException, ObjectCreateException, \
     ObjectDeletionException
 from custodian.objects import Object
+from custodian.objects.fields import RelatedObjectField
 from custodian.objects.serializer import ObjectSerializer
 
 
@@ -26,6 +27,12 @@ class ObjectsManager:
         :param obj:
         :return:
         """
+        # it is necessary to check that related fields reference existing Custodian objects
+        # if related object does not exist we need to create it first
+        for field in obj.fields.values():
+            if isinstance(field, RelatedObjectField) and field.link_type == RelatedObjectField.LINK_TYPES.OUTER:
+                if not self.get(field.obj.name):
+                    self.create(field.obj)
         data, ok = self.client.execute(
             command=Command(name=self._base_command_name, method=COMMAND_METHOD.PUT),
             data=obj.serialize()
@@ -41,6 +48,12 @@ class ObjectsManager:
         :param obj:
         :return:
         """
+        # it is necessary to check that related fields reference existing Custodian objects
+        # if related object does not exist we need to create it first
+        for field in obj.fields.values():
+            if isinstance(field, RelatedObjectField) and field.link_type == RelatedObjectField.LINK_TYPES.OUTER:
+                if not self.get(field.obj.name):
+                    self.create(field.obj)
         data, ok = self.client.execute(
             command=Command(name=self.get_object_command_name(obj.name), method=COMMAND_METHOD.POST),
             data=obj.serialize()
@@ -73,7 +86,7 @@ class ObjectsManager:
         data, ok = self.client.execute(
             command=Command(name=self.get_object_command_name(object_name), method=COMMAND_METHOD.GET)
         )
-        obj = ObjectSerializer.deserialize(data, self) if ok else None
+        obj = ObjectSerializer.deserialize(data, objects_manager=self) if ok else None
         return obj
 
     def get_all(self):
