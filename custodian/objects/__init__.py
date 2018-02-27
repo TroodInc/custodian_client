@@ -6,15 +6,37 @@ from custodian.objects.fields import BaseField, FieldsManager
 
 class Object:
     name = None
-    key = None
     cas = None
-    fields = None
+    _key = None
+    _fields = None
+    _evaluated = None
+    _objects_manager = None
 
-    def __init__(self, name: str, key: str, cas: bool, fields: List[BaseField]):
+    def __init__(self, name: str, cas: bool, objects_manager, key: str = None, fields: List[BaseField] = None):
         self.name = name
-        self.key = key
         self.cas = cas
-        self.fields = OrderedDict([(x.name, x) for x in fields])
+        self._key = key
+        self._fields = OrderedDict([(x.name, x) for x in fields]) if fields else None
+        self._evaluated = bool(fields) and bool(key)
+        self._objects_manager = objects_manager
+
+    @property
+    def key(self):
+        if not self._evaluated:
+            self._evaluate()
+        return self._key
+
+    @property
+    def fields(self):
+        if not self._evaluated:
+            self._evaluate()
+        return self._fields
+
+    def _evaluate(self):
+        obj = self._objects_manager.get(self.name)
+        self._fields = obj.fields
+        self._key = obj.key
+        self._evaluated = True
 
     def serialize(self):
         return {
