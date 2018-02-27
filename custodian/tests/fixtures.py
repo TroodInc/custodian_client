@@ -2,7 +2,7 @@ import os
 import pytest
 
 from custodian.client import Client
-from custodian.objects.fields import NumberField, StringField, BooleanField
+from custodian.objects.fields import NumberField, StringField, BooleanField, IntegerField
 from custodian.objects import Object
 from custodian.records.model import Record
 
@@ -13,17 +13,18 @@ def client():
 
 
 @pytest.fixture
-def person_object():
+def person_object(client):
     return Object(
         name='person',
         key='id',
         cas=False,
         fields=[
-            NumberField(name='id', optional=True, default={'func': 'nextval'}),
+            IntegerField(name='id', optional=True, default={'func': 'nextval'}),
             StringField(name='name'),
             NumberField(name='age'),
             BooleanField(name='is_active')
-        ]
+        ],
+        objects_manager=client.objects
     )
 
 

@@ -107,7 +107,8 @@ class TestCustodianIntegrationSeries:
                 )
             ],
             key='id',
-            cas=False
+            cas=False,
+            objects_manager=client.objects
         )
         client.objects.create(account_object)
         account_object = client.objects.get(account_object.name)
@@ -131,7 +132,8 @@ class TestCustodianIntegrationSeries:
                 )
             ],
             key='id',
-            cas=False
+            cas=False,
+            objects_manager=client.objects
         )
         assert_that(client.objects.get('account'), instance_of(Object))
         client.objects.delete(account_object)

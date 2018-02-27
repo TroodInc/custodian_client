@@ -4,7 +4,7 @@ from custodian.objects.fields import NumberField, StringField, BooleanField, Rel
 from custodian.objects import Object
 
 
-def test_object_serializes_itself():
+def test_object_serializes_itself(client):
     obj = Object(
         name='person',
         key='id',
@@ -13,7 +13,8 @@ def test_object_serializes_itself():
             NumberField(name='id', optional=True),
             StringField(name='name'),
             BooleanField(name='is_active')
-        ]
+        ],
+        objects_manager=client.objects
     )
     serialized_object = obj.serialize()
     assert_that(serialized_object, is_(instance_of(dict)))
@@ -21,7 +22,7 @@ def test_object_serializes_itself():
     assert_that(serialized_object['fields'][0]['type'], equal_to('number'))
 
 
-def test_object_with_related_inner_object_field_serializes_itself(person_object):
+def test_object_with_related_inner_object_field_serializes_itself(person_object, client):
     obj = Object(
         name='address',
         key='id',
@@ -35,7 +36,8 @@ def test_object_with_related_inner_object_field_serializes_itself(person_object)
                 obj=person_object,
                 link_type=RelatedObjectField.LINK_TYPES.INNER
             )
-        ]
+        ],
+        objects_manager=client.objects
     )
     serialized_object = obj.serialize()
     assert_that(serialized_object, is_(instance_of(dict)))
@@ -44,7 +46,7 @@ def test_object_with_related_inner_object_field_serializes_itself(person_object)
     assert_that(serialized_object['fields'][3], equal_to(expected_serialized_field))
 
 
-def test_object_with_related_outer_object_field_serializes_itself():
+def test_object_with_related_outer_object_field_serializes_itself(client):
     address_object = Object(
         name='address',
         key='id',
@@ -53,7 +55,8 @@ def test_object_with_related_outer_object_field_serializes_itself():
             NumberField(name='id', optional=True),
             StringField(name='street'),
             BooleanField(name='house')
-        ]
+        ],
+        objects_manager=client.objects
     )
     person_obj = Object(
         name='person',
@@ -70,7 +73,8 @@ def test_object_with_related_outer_object_field_serializes_itself():
                 link_type=RelatedObjectField.LINK_TYPES.OUTER,
                 many=True
             )
-        ]
+        ],
+        objects_manager=client.objects
     )
     serialized_object = person_obj.serialize()
     assert_that(serialized_object, is_(instance_of(dict)))
