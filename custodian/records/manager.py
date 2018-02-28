@@ -99,6 +99,7 @@ class RecordsManager:
             command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.GET),
             params={'q': query_string}
         )
+
         records = []
         for record_data in data:
             records.append(Record(obj=obj, **record_data))

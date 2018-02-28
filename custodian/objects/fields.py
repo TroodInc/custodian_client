@@ -1,5 +1,7 @@
 from typing import NamedTuple
 
+import datetime
+
 from custodian.exceptions import FieldDoesNotExistException, ImproperlyConfiguredFieldException
 
 
@@ -73,6 +75,13 @@ class ArrayField(BaseField):
 class ObjectField(BaseField):
     type: str = 'object'
     cast_func = lambda x: x
+
+
+class DateTimeField(StringField):
+    _date_format = '%m/%d/%Y %H:%M:%S.%f%z'
+
+    def from_raw(self, value):
+        return datetime.datetime.strptime(value, self._date_format)
 
 
 class RelatedObjectField(BaseField):
