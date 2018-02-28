@@ -106,7 +106,10 @@ class RelatedObjectField(BaseField):
         }
 
     def to_raw(self, value):
-        return value
+        if self._link_type == self.LINK_TYPES.OUTER:
+            return None
+        else:
+            return value
 
     def from_raw(self, value):
         """
