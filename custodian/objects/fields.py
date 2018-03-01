@@ -1,7 +1,5 @@
 from typing import NamedTuple
 
-import datetime
-
 from custodian.exceptions import FieldDoesNotExistException, ImproperlyConfiguredFieldException
 
 
@@ -77,13 +75,6 @@ class ObjectField(BaseField):
     cast_func = lambda x: x
 
 
-class DateTimeField(StringField):
-    _date_format = '%m/%d/%Y %H:%M:%S.%f%z'
-
-    def from_raw(self, value):
-        return datetime.datetime.strptime(value, self._date_format)
-
-
 class RelatedObjectField(BaseField):
     LINK_TYPES = NamedTuple('LINK_TYPE', [('INNER', str), ('OUTER', str)])(INNER='inner', OUTER='outer')
 
@@ -121,16 +112,7 @@ class RelatedObjectField(BaseField):
             return value
 
     def from_raw(self, value):
-        """
-        This method implements a workaround for the Custodian`s bug: https://trood-cis.atlassian.net/browse/TB-15
-        TODO: remove this method as soon as the bug will be fixed
-        :param value:
-        :return:
-        """
-        if isinstance(value, dict):
-            return value.get(self._obj.key)
-        else:
-            return value
+        return value
 
     @property
     def obj(self):
