@@ -4,9 +4,10 @@
 ## Client instantiation
 
 To start using client just instantiate it like in the following snippet: 
-```
-client = Client('http://localhost:8080/custodian/')
-```
+
+    from custodian.client import Client
+    client = Client('http://localhost:8080/custodian/')
+
 The only argument is Custodian Server`s URL.
 
 
@@ -14,14 +15,15 @@ The only argument is Custodian Server`s URL.
 ### Instantiating object
 To instantiate new Custodian object use Object class.
 
-###### Arguments:
+##### Arguments:
 +   name:str - object`s name
 +   cas:bool - cas flag
 +   objects_manager: ObjectsManager - ObjectsManager instance
 +   key:str - primary key field name
 +   fields: List[BaseField] - a list of fields
 
-###### Usage example:
+##### Usage example:
+    from custodian.objects import Object
     
     obj = Object(
             name='account',
@@ -30,7 +32,16 @@ To instantiate new Custodian object use Object class.
             cas=False,
             objects_manager=client.objects
         )
+### Object`s fields
+Fields are available at *custodian.objects.fields* module:
++  NumberField
++  IntegerField
++  StringField
++  BooleanField
++  ArrayField
++  ObjectField
 
+### Object operations
 All Custodian object-related operations are performed using ObjectsManager which is available via client instance as 
 *objects* attribute.
 
@@ -38,9 +49,9 @@ All Custodian object-related operations are performed using ObjectsManager which
 ### List objects
 To get all objects from the Custodian use *get_all* method:
 
-###### Arguments: -
-###### Returns: List[Object]
-###### Usage example:
+##### Arguments: -
+##### Returns: List[Object]
+##### Usage example:
 ```
 client.objects.get_all()
 ```
@@ -48,9 +59,9 @@ client.objects.get_all()
 ### Creating object
 To create a new object use *create* method:
 
-###### Arguments: object:Object
-###### Returns: Object
-###### Usage example:
+##### Arguments: object:Object
+##### Returns: Object
+##### Usage example:
 ```
 obj = client.objects.create(obj)
 ```
@@ -58,9 +69,9 @@ obj = client.objects.create(obj)
 ### Updating object
 To update an existing object use *update* method:
 
-###### Arguments: object:Object
-###### Returns: Object
-###### Usage example:
+##### Arguments: object:Object
+##### Returns: Object
+##### Usage example:
 ```
 obj = client.objects.update(obj)
 ```
@@ -69,11 +80,9 @@ obj = client.objects.update(obj)
 ### Deleting object
 To delete an existing object use *delete* method:
 
-###### Arguments: object:Object
-###### Returns: Object
-###### Usage example:
+##### Arguments: object:Object
+##### Returns: Object
+##### Usage example:
 ```
-obj = client.objects.delete(obj)
+client.objects.delete(obj)
 ```
-
-
