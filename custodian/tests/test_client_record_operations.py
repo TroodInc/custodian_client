@@ -321,3 +321,16 @@ class TestCustodianBulkOperationsIntegrationSeries:
         client.records.bulk_delete(*two_records)
         assert_that(two_records[0].get_pk(), is_(None))
         assert_that(two_records[1].get_pk(), is_(None))
+
+    def test_slice(self, person_object, client: Client):
+        client.records.bulk_delete(*[x for x in client.records.query(person_object)])
+        assert_that(client.records.query(person_object), has_length(0))
+        client.records.bulk_create(
+            Record(obj=person_object, **{'name': 'Feodor', 'is_active': True, 'age': 23}),
+            Record(obj=person_object, **{'name': 'Victor', 'is_active': False, 'age': 22}),
+            Record(obj=person_object, **{'name': 'Artem', 'is_active': True, 'age': 35}),
+            Record(obj=person_object, **{'name': 'Anton', 'is_active': False, 'age': 55})
+        )
+        assert_that(client.records.query(person_object), has_length(4))
+        two_first_records = client.records.query(person_object)[:2]
+        assert_that(two_first_records, has_length(2))

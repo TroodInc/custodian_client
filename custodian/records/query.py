@@ -142,10 +142,10 @@ class Query:
             query_string = ','.join(filter(lambda x: bool(x), [query_string, ordering_expression]))
         # limit option
         if self._limit:
-            if self._limit[0] == 0:
-                limit_expression = 'limit({})'.format(self._limit[1])
-            else:
-                limit_expression = 'limit({},{})'.format(self._limit[0], self._limit[1])
+            # if self._limit[0] == 0:
+            #     limit_expression = 'limit({})'.format(self._limit[1])
+            # else:
+            limit_expression = 'limit({},{})'.format(self._limit[0], self._limit[1])
             # currently Custodian can`t handle array values
 
             query_string = ','.join(filter(lambda x: bool(x), [query_string, limit_expression]))
