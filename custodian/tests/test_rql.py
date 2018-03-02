@@ -29,8 +29,7 @@ class TestRqlSeries:
         assert_that(records, has_length(1))
         assert_that(records[0].get_pk(), equal_to(two_records[0].get_pk()))
 
-    @pytest.mark.xfail
-    def test_in_operator(self, client, two_records, person_object):
+    def test_in_operator(self, client, person_object, two_records):
         """
         Filter records with "in" operator
 

@@ -15,7 +15,7 @@ def client():
     return Client(server_url=os.environ['SERVER_URL'])
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture
 def person_object(client):
     return Object(
         name='person',
