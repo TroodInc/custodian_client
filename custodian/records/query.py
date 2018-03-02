@@ -107,18 +107,18 @@ class Query:
         self._is_evaluated = False
         self._result = None
 
-    def filter(self, q_object: Q = None, **kwargs):
+    def filter(self, q_object: Q = None, **filters):
         """
         Applies filters to the current query
         :param q_object:
-        :param kwargs:
+        :param filters:
         :return:
         """
         new_query = QueryFactory.clone(self)
         if q_object:
             new_query._q_objects.append(q_object)
-        if kwargs:
-            new_query._q_objects.append(Q(**kwargs))
+        if filters:
+            new_query._q_objects.append(Q(**filters))
         return new_query
 
     def to_string(self) -> str:

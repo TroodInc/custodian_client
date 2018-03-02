@@ -5,15 +5,15 @@ from custodian.objects import Object
 class Record:
     obj = None
 
-    def __init__(self, obj: Object, **kwargs):
+    def __init__(self, obj: Object, **values):
         """
         Assembles a record based on obj.fields specification
         :param obj:
-        :param kwargs:
+        :param values:
         """
         self.obj = obj
         for field in obj.fields.values():
-            value = kwargs.get(field.name, None)
+            value = values.get(field.name, None)
             # convert value if it is set
             if value:
                 value = field.from_raw(value)

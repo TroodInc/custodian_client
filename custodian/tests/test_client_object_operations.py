@@ -1,11 +1,9 @@
-import pytest
 import requests_mock
 from hamcrest import *
 
 from custodian.client import Client
-from custodian.exceptions import CommandExecutionFailureException
 from custodian.objects import Object
-from custodian.objects.fields import NumberField, StringField, BooleanField, RelatedObjectField
+from custodian.objects.fields import NumberField, StringField, RelatedObjectField
 
 
 def test_client_makes_correct_request_on_object_creation(person_object: Object, client: Client):
