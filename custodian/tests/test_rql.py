@@ -5,17 +5,8 @@ from custodian.client import Client
 from custodian.objects import Object
 
 
+@pytest.mark.usefixtures('flush_database')
 class TestRqlSeries:
-    def test_the_database_contains_person_object(self, client: Client, person_object: Object):
-        """
-        Remove any existing objects and create a new "Person" object
-        :param client:
-        """
-        for obj in client.objects.get_all():
-            client.objects.delete(obj)
-        client.objects.create(person_object)
-        assert_that(client.objects.get_all(), has_length(1))
-
     def test_eq_operator(self, client, two_records, person_object):
         """
         Filter records with "eq" operator
