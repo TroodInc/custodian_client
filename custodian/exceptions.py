@@ -32,3 +32,11 @@ class ImproperlyConfiguredFieldException(Exception):
 
 class FieldValidationException(Exception):
     pass
+
+
+class RecordUpdateException(Exception):
+    pass
+
+
+class CasFailureException(RecordUpdateException):
+    pass

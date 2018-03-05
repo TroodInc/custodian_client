@@ -1,5 +1,6 @@
 from custodian.command import Command, COMMAND_METHOD
-from custodian.exceptions import CommandExecutionFailureException, RecordAlreadyExistsException, ObjectUpdateException
+from custodian.exceptions import CommandExecutionFailureException, RecordAlreadyExistsException, ObjectUpdateException, \
+    RecordUpdateException, CasFailureException
 from custodian.objects import Object
 from custodian.records.model import Record
 from custodian.records.query import Query
@@ -54,13 +55,19 @@ class RecordsManager:
         """
         Updates an existing record in the Custodian
         """
-        data, _ = self.client.execute(
+        data, ok = self.client.execute(
             command=Command(name=self._get_single_record_command_name(record.obj, record.get_pk()),
                             method=COMMAND_METHOD.POST),
             data=record.serialize()
         )
-        record.__init__(obj=record.obj, **data)
-        return record
+        if ok:
+            record.__init__(obj=record.obj, **data)
+            return record
+        else:
+            if data.get('code') == 'cas_failed':
+                raise CasFailureException(data.get('msg', ''))
+            else:
+                raise RecordUpdateException(data.get('msg', ''))
 
     def delete(self, record: Record):
         """

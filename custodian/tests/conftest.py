@@ -1,5 +1,3 @@
-import pytest
-
 from custodian.tests.fixtures import *
 
 

@@ -20,11 +20,12 @@ def person_object(client):
     return Object(
         name='person',
         key='id',
-        cas=False,
+        cas=True,
         fields=[
             IntegerField(name='id', optional=True, default={'func': 'nextval'}),
             StringField(name='name'),
             NumberField(name='age'),
+            NumberField(name='cas', optional=True),
             BooleanField(name='is_active')
         ],
         objects_manager=client.objects

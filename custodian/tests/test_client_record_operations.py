@@ -3,7 +3,7 @@ import requests_mock
 from hamcrest import *
 
 from custodian.client import Client
-from custodian.exceptions import RecordAlreadyExistsException
+from custodian.exceptions import RecordAlreadyExistsException, CasFailureException
 from custodian.objects import Object
 from custodian.records.model import Record
 
@@ -272,6 +272,18 @@ class TestCustodianSingleOperationsIntegrationSeries:
         client.records.delete(person_record)
         assert_that(person_record.get_pk(), is_(None))
         assert_that(client.records.get(person_record.obj, pk), is_(None))
+
+    def test_exception_raised_on_cas_error(self, person_record: Record, client: Client):
+        """
+        Try to update record with incorrect cas value
+        :param person_record:
+        :param client:
+        """
+        person_record = client.records.create(person_record)
+        assert_that(client.records.get(person_record.obj, person_record.get_pk()), instance_of(Record))
+        person_record.cas = -1
+        with pytest.raises(CasFailureException):
+            client.records.update(person_record)
 
 
 class TestCustodianBulkOperationsIntegrationSeries:
