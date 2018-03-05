@@ -85,8 +85,3 @@ def test_query_filter_operation_does_not_affect_existing_query(person_object: Ob
 def test_empty_query_with_limits_assembles_correct_expression(person_object: Object):
     base_query = Query(person_object, None)[:100]
     assert_that(base_query.to_string(), equal_to('limit(0,100)'))
-
-
-def test_empty_query_with_limits_assembles_incorrect_expression_but_it_is_ok(person_object: Object):
-    base_query = Query(person_object, None)[:100]
-    assert_that(base_query.to_string(), equal_to('limit(100)'))
