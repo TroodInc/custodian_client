@@ -32,9 +32,6 @@ class TestRqlSeries:
     def test_in_operator(self, client, person_object, two_records):
         """
         Filter records with "in" operator
-
-        TODO: Custodian parser fails to parse array value properly
-        Example: http://localhost:8080/custodian/data/bulk/person?q=in(name,(Valentine,Victor))
         """
         second_record_name = 'Victor'
         assert_that(two_records[0].name, not_(equal_to(second_record_name)))

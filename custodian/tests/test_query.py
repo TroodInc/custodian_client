@@ -55,8 +55,8 @@ def test_query_ordering(person_object: Object):
 
 
 def test_query_slicing(person_object: Object):
-    query = Query(person_object, None).filter(is_active__eq=True)[50:100]
-    assert_that(query.to_string(), contains_string('limit(50,50)'))
+    query = Query(person_object, None).filter(is_active__eq=True)[150:200]
+    assert_that(query.to_string(), contains_string('limit(150,50)'))
 
 
 def test_query_access_by_index(person_object: Object):
