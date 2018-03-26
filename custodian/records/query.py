@@ -9,7 +9,7 @@ class Q:
     _logical_expressions = None
     _inverted = None
 
-    _KNOWN_OPERATORS = ('in', 'like', 'eq', 'ne', 'gt', 'ge', 'lt', 'le')
+    _KNOWN_OPERATORS = ('in', 'like', 'eq', 'ne', 'gt', 'ge', 'lt', 'le', 'eq(null())')
 
     def __init__(self, **kwargs):
         self._query = deepcopy(kwargs)
@@ -158,8 +158,6 @@ class Query:
         new_query = QueryFactory.clone(self)
         for ordering in orderings:
             ordering = ordering.replace('__', '.')
-            if not ordering.startswith('-'):
-                ordering = '+' + ordering
             new_query._orderings.append(ordering)
         return new_query
 

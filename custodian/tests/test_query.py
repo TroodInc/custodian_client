@@ -50,7 +50,8 @@ def test_query(person_object: Object):
 
 
 def test_query_ordering(person_object: Object):
-    query = Query(person_object, None).filter(is_active__eq=True).order_by('person__last_name', '-person__phone_number')
+    query = Query(person_object, None).filter(is_active__eq=True).order_by('+person__last_name',
+                                                                           '-person__phone_number')
     assert_that(query.to_string(), contains_string('sort(+person.last_name, -person.phone_number)'))
 
 
