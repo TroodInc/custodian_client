@@ -42,7 +42,6 @@ class Client:
         :raises CommandExecutionFailureException:
         """
         url = '/'.join([self.server_url, command.name])
-
         logger.debug('Making {} request: url = "{}", json = "{}", query = "{}"'.format(
             command.method.upper(),
             url,
@@ -50,6 +49,7 @@ class Client:
             self._make_query_string(
                 params or {}))
         )
+
         response = getattr(requests, command.method)(url, json=data, params=self._make_query_string(params or {}))
         if response.content:
             response_content = response.json()

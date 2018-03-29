@@ -79,48 +79,41 @@ class RelatedObjectField(BaseField):
     LINK_TYPES = NamedTuple('LINK_TYPE', [('INNER', str), ('OUTER', str)])(INNER='inner', OUTER='outer')
 
     type: str = 'relatedObject'
-    _many: bool = False
+    many: bool = False
 
     def __init__(self, name: str, obj, link_type: str, optional: bool = False, outer_link_field: str = None,
-                 many=False, **kwargs):
+                 many=False, reverse_field=None, **kwargs):
         if link_type == self.LINK_TYPES.OUTER and outer_link_field is None:
             raise ImproperlyConfiguredFieldException('"outer_link_field" must be specified for "outer" link type')
 
-        self._link_type = link_type
-        self._obj = obj
-        self._many = many
-        self._outer_link_field = outer_link_field
+        self.link_type = link_type
+        self.obj = obj
+        self.many = many
+        self.outer_link_field = outer_link_field
+        self.reverse_field = reverse_field
         super(RelatedObjectField, self).__init__(name, optional, default=None)
 
     def serialize(self):
         return {
             **{
                 'name': self.name,
-                'type': 'object' if not self._many else 'array',
+                'type': 'object' if not self.many else 'array',
                 'optional': self.optional,
-                'linkMeta': self._obj.name,
-                'linkType': self._link_type,
+                'linkMeta': self.obj.name,
+                'linkType': self.link_type,
 
             },
-            **({'outerLinkField': self._outer_link_field} if self._outer_link_field else {})
+            **({'outerLinkField': self.outer_link_field} if self.outer_link_field else {})
         }
 
     def to_raw(self, value):
-        if self._link_type == self.LINK_TYPES.OUTER:
+        if self.link_type == self.LINK_TYPES.OUTER:
             return None
         else:
             return value
 
     def from_raw(self, value):
         return value
-
-    @property
-    def obj(self):
-        return self._obj
-
-    @property
-    def link_type(self):
-        return self._link_type
 
 
 class FieldsManager:

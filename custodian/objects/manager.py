@@ -13,32 +13,6 @@ class ObjectsManager:
         self.client = client
         self._pending_objects = []
 
-    @classmethod
-    def get_object_command_name(cls, object_name: str):
-        """
-        Constructs API command for existing Custodian object
-        :param obj:
-        :return:
-        """
-        return '/'.join([cls._base_command_name, object_name])
-
-    def _split_object_by_phases(self, obj: Object):
-        """
-        In case of referencing non-existing object split object into "safe" object and fields to add to this object later
-        :param obj:
-        :return:
-        """
-        safe_fields = []
-        fields_to_add_later = []
-        for field in obj.fields.values():
-            if isinstance(field, RelatedObjectField):
-                # if object contains field which references the object which does not exist yet
-                if not self.get(field.obj.name):
-                    fields_to_add_later.append(field)
-                    continue
-            safe_fields.append(field)
-        return Object(obj.name, obj.cas, self, obj.key, safe_fields), fields_to_add_later
-
     def create(self, obj: Object) -> Object:
         """
         Creates new object in Custodian
@@ -65,9 +39,9 @@ class ObjectsManager:
             self._pending_objects.remove(obj.name)
             if fields_to_add_later:
                 # now update object with the rest of fields
-                return self.update(obj)
-            else:
-                return obj
+                obj = self.update(obj)
+            self._process_reverse_relations(obj)
+            return obj
         else:
             raise ObjectCreateException(data.get('msg'))
 
@@ -84,7 +58,7 @@ class ObjectsManager:
                 if not self.get(field.obj.name):
                     self.create(field.obj)
         data, ok = self.client.execute(
-            command=Command(name=self.get_object_command_name(obj.name), method=COMMAND_METHOD.POST),
+            command=Command(name=self._get_object_command_name(obj.name), method=COMMAND_METHOD.POST),
             data=obj.serialize()
         )
         if ok:
@@ -100,7 +74,7 @@ class ObjectsManager:
         """
 
         data, ok = self.client.execute(
-            command=Command(name=self.get_object_command_name(obj.name), method=COMMAND_METHOD.DELETE)
+            command=Command(name=self._get_object_command_name(obj.name), method=COMMAND_METHOD.DELETE)
         )
         if ok:
             return obj
@@ -113,7 +87,7 @@ class ObjectsManager:
         :param object_name:
         """
         data, ok = self.client.execute(
-            command=Command(name=self.get_object_command_name(object_name), method=COMMAND_METHOD.GET)
+            command=Command(name=self._get_object_command_name(object_name), method=COMMAND_METHOD.GET)
         )
         obj = ObjectSerializer.deserialize(data, objects_manager=self) if ok else None
         return obj
@@ -124,9 +98,46 @@ class ObjectsManager:
         :return:
         """
         data, ok = self.client.execute(
-            command=Command(name=self.get_object_command_name(''), method=COMMAND_METHOD.GET)
+            command=Command(name=self._get_object_command_name(''), method=COMMAND_METHOD.GET)
         )
         if ok and data:
             return [ObjectSerializer.deserialize(object_data, self) for object_data in data]
         else:
             return []
+
+    @classmethod
+    def _get_object_command_name(cls, object_name: str):
+        """
+        Constructs API command for existing Custodian object
+        :param obj:
+        :return:
+        """
+        return '/'.join([cls._base_command_name, object_name])
+
+    def _split_object_by_phases(self, obj: Object):
+        """
+        In case of referencing non-existing object split object into "safe" object and fields to add to this object later
+        :param obj:
+        :return:
+        """
+        safe_fields = []
+        fields_to_add_later = []
+        for field in obj.fields.values():
+            if isinstance(field, RelatedObjectField):
+                # if object contains field which references the object which does not exist yet
+                if not self.get(field.obj.name):
+                    fields_to_add_later.append(field)
+                    continue
+            safe_fields.append(field)
+        return Object(obj.name, obj.cas, self, obj.key, safe_fields), fields_to_add_later
+
+    def _process_reverse_relations(self, obj: Object):
+        """
+        Check if inner relation field has no corresponding outer relation field and create it if needed
+        :param obj:
+        """
+        for field in obj.fields.values():
+            if isinstance(field, RelatedObjectField) and field.link_type == RelatedObjectField.LINK_TYPES.INNER:
+                if field.reverse_field.name not in field.obj.fields:
+                    field.obj.fields[field.reverse_field.name] = field.reverse_field
+                    self.update(field.obj)

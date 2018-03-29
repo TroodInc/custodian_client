@@ -1,6 +1,6 @@
 from custodian.command import Command, COMMAND_METHOD
 from custodian.exceptions import CommandExecutionFailureException, RecordAlreadyExistsException, ObjectUpdateException, \
-    RecordUpdateException, CasFailureException
+    RecordUpdateException, CasFailureException, ObjectDeletionException
 from custodian.objects import Object
 from custodian.records.model import Record
 from custodian.records.query import Query
@@ -91,7 +91,8 @@ class RecordsManager:
         :return:
         """
         data, ok = self.client.execute(
-            command=Command(name=self._get_single_record_command_name(obj, record_id), method=COMMAND_METHOD.GET)
+            command=Command(name=self._get_single_record_command_name(obj, record_id), method=COMMAND_METHOD.GET),
+            params={'depth': 1}
         )
         return Record(obj=obj, **data) if ok else None
 
@@ -104,7 +105,7 @@ class RecordsManager:
         """
         data, _ = self.client.execute(
             command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.GET),
-            params={'q': query_string}
+            params={'q': query_string, 'depth': 1}
         )
 
         records = []
@@ -175,12 +176,15 @@ class RecordsManager:
         if records:
             self._check_records_have_same_object(*records)
             obj = records[0].obj
-            self.client.execute(
+            data, ok = self.client.execute(
                 command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.DELETE),
                 data=[{obj.key: record.get_pk()} for record in records]
             )
-            for record in records:
-                record.id = None
-            return list(records)
+            if ok:
+                for record in records:
+                    record.id = None
+                return list(records)
+            else:
+                raise ObjectDeletionException(data.get('msg'))
         else:
             return []
