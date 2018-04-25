@@ -5,6 +5,7 @@ from custodian.exceptions import FieldDoesNotExistException, ImproperlyConfigure
 
 class BaseField:
     type = None
+    parent_obj = None
 
     def __init__(self, name: str, optional: bool = False, default=None, **kwargs):
         if self.type is None:
@@ -22,6 +23,9 @@ class BaseField:
         }
 
     cast_func = None
+
+    def set_parent_obj(self, parent_obj):
+        setattr(self, 'parent_obj', parent_obj)
 
     def from_raw(self, value):
         if self.cast_func is None:
@@ -80,6 +84,7 @@ class RelatedObjectField(BaseField):
 
     type: str = 'relatedObject'
     many: bool = False
+    _reverse_field = None
 
     def __init__(self, name: str, obj, link_type: str, optional: bool = False, outer_link_field: str = None,
                  many=False, reverse_field=None, **kwargs):
@@ -90,7 +95,7 @@ class RelatedObjectField(BaseField):
         self.obj = obj
         self.many = many
         self.outer_link_field = outer_link_field
-        self.reverse_field = reverse_field
+        self._reverse_field = reverse_field
         super(RelatedObjectField, self).__init__(name, optional, default=None)
 
     def serialize(self):
@@ -114,6 +119,18 @@ class RelatedObjectField(BaseField):
 
     def from_raw(self, value):
         return value
+
+    @property
+    def reverse_field(self):
+        if not self._reverse_field:
+            if self.link_type == self.LINK_TYPES.INNER:
+                for field in self.obj.fields.values():
+                    if isinstance(field, RelatedObjectField):
+                        if field.outer_link_field == self.name and field.obj.name == self.parent_obj.name:
+                            self._reverse_field = field
+            else:
+                self._reverse_field = self.obj.fields.get(self.outer_link_field)
+        return self._reverse_field
 
 
 class FieldsManager:

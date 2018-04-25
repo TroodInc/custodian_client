@@ -16,6 +16,9 @@ def test_client_makes_correct_request_on_object_creation(person_object: Object, 
 def test_client_makes_correct_request_on_object_update(person_object: Object, client: Client):
     with requests_mock.Mocker() as mocker:
         mocker.post('/'.join([client.server_url, 'meta/{}'.format(person_object.name)]), json={'status': 'OK'})
+        # mock preprocess request
+        mocker.get('/'.join([client.server_url, 'meta/{}'.format(person_object.name)]),
+                   json={'status': 'OK', 'data': person_object.serialize()})
         obj = client.objects.update(person_object)
         assert_that(obj, is_(instance_of(Object)))
 

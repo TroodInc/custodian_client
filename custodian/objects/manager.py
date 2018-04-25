@@ -3,7 +3,7 @@ from custodian.exceptions import ObjectUpdateException, ObjectCreateException, \
     ObjectDeletionException
 from custodian.objects import Object
 from custodian.objects.fields import RelatedObjectField
-from custodian.objects.serializer import ObjectSerializer
+from custodian.objects.factory import ObjectFactory
 
 
 class ObjectsManager:
@@ -33,14 +33,18 @@ class ObjectsManager:
         )
         if ok:
             for field in fields_to_add_later:
-                # create referenced fields
-                self.create(field.obj)
+                # process referenced fields` objects
+                if not self.get(field.obj.name):
+                    self.create(field.obj)
+                else:
+                    self.update(field.obj)
+
             # unmark current object as pending
             self._pending_objects.remove(obj.name)
             if fields_to_add_later:
                 # now update object with the rest of fields
                 obj = self.update(obj)
-            self._process_reverse_relations(obj)
+            self._post_process_reverse_relations(obj)
             return obj
         else:
             raise ObjectCreateException(data.get('msg'))
@@ -51,12 +55,7 @@ class ObjectsManager:
         :param obj:
         :return:
         """
-        # it is necessary to check that related fields reference existing Custodian objects
-        # if related object does not exist we need to create it first
-        for field in obj.fields.values():
-            if isinstance(field, RelatedObjectField) and field.link_type == RelatedObjectField.LINK_TYPES.OUTER:
-                if not self.get(field.obj.name):
-                    self.create(field.obj)
+        self._pre_process_reverse_relations(obj)
         data, ok = self.client.execute(
             command=Command(name=self._get_object_command_name(obj.name), method=COMMAND_METHOD.POST),
             data=obj.serialize()
@@ -89,7 +88,7 @@ class ObjectsManager:
         data, ok = self.client.execute(
             command=Command(name=self._get_object_command_name(object_name), method=COMMAND_METHOD.GET)
         )
-        obj = ObjectSerializer.deserialize(data, objects_manager=self) if ok else None
+        obj = ObjectFactory.factory(data, objects_manager=self) if ok else None
         return obj
 
     def get_all(self):
@@ -101,7 +100,7 @@ class ObjectsManager:
             command=Command(name=self._get_object_command_name(''), method=COMMAND_METHOD.GET)
         )
         if ok and data:
-            return [ObjectSerializer.deserialize(object_data, self) for object_data in data]
+            return [ObjectFactory.factory(object_data, self) for object_data in data]
         else:
             return []
 
@@ -125,19 +124,44 @@ class ObjectsManager:
         for field in obj.fields.values():
             if isinstance(field, RelatedObjectField):
                 # if object contains field which references the object which does not exist yet
-                if not self.get(field.obj.name):
+                # or if referenced object is not actual
+                if not self.get(field.obj.name) or field.outer_link_field not in self.get(field.obj.name).fields:
                     fields_to_add_later.append(field)
                     continue
             safe_fields.append(field)
         return Object(obj.name, obj.cas, self, obj.key, safe_fields), fields_to_add_later
 
-    def _process_reverse_relations(self, obj: Object):
+    def _post_process_reverse_relations(self, obj: Object):
         """
         Check if inner relation field has no corresponding outer relation field and create it if needed
         :param obj:
         """
+        # check added fields
         for field in obj.fields.values():
             if isinstance(field, RelatedObjectField) and field.link_type == RelatedObjectField.LINK_TYPES.INNER:
-                if field.reverse_field.name not in field.obj.fields:
+                if field.reverse_field and field.reverse_field.name not in field.obj.fields:
                     field.obj.fields[field.reverse_field.name] = field.reverse_field
                     self.update(field.obj)
+
+    def _pre_process_reverse_relations(self, obj: Object):
+        """
+        Check if inner relation field has corresponding outer relation field and remove it if needed
+        :param obj:
+        """
+        actual_object = self.get(obj.name)
+
+        # check fields which are to remove
+        for field in actual_object.fields.values():
+            if isinstance(field, RelatedObjectField) and field.link_type == RelatedObjectField.LINK_TYPES.INNER:
+                if field.reverse_field and field.name not in obj.fields:
+                    del field.obj.fields[field.reverse_field.name]
+                    self.update(field.obj)
+
+        # check field which are to add
+
+        # it is necessary to check that related fields reference existing Custodian objects
+        # if related object does not exist we need to create it first
+        for field in obj.fields.values():
+            if isinstance(field, RelatedObjectField) and field.link_type == RelatedObjectField.LINK_TYPES.OUTER:
+                if not self.get(field.obj.name):
+                    self.create(field.obj)

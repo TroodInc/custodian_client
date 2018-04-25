@@ -19,6 +19,9 @@ class Object:
         self._fields = OrderedDict([(x.name, x) for x in fields]) if fields else None
         self._evaluated = bool(fields) and bool(key)
         self._objects_manager = objects_manager
+        if self._fields:
+            for field in self._fields.values():
+                field.set_parent_obj(self)
 
     @property
     def key(self):
