@@ -6,9 +6,9 @@
 To start using client just instantiate it like in the following snippet: 
 
     from custodian.client import Client
-    client = Client('http://localhost:8080/custodian/')
+    client = Client('http://localhost:8080/custodian/', authorization_token="c4216a3440b04270945d2b69ed2d4365")
 
-The only argument is Custodian Server`s URL.
+Custodian Server`s URL is required, Trood Auth authorization token is optional.
 
 
 ## Working with objects
@@ -47,6 +47,9 @@ Fields are available at *custodian.objects.fields* module:
 +  BooleanField
 +  ArrayField
 +  ObjectField
++  DateField
++  TimeField
++  DateTimeField
 
 ### Object operations
 All Custodian object-related operations are performed using ObjectsManager which is available via client instance as 
