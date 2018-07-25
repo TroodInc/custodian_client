@@ -1,4 +1,7 @@
+import datetime
 from typing import NamedTuple
+
+import dateparser
 
 from custodian.exceptions import FieldDoesNotExistException, ImproperlyConfiguredFieldException
 
@@ -64,6 +67,45 @@ class StringField(BaseField):
     cast_func = str
 
 
+class DateTimeField(BaseField):
+    type: str = 'datetime'
+    cast_func = datetime.datetime
+
+    def from_raw(self, value):
+        if value and isinstance(value, str):
+            return dateparser.parse(value)
+        return value
+
+    def to_raw(self, value: datetime.datetime):
+        return value.isoformat() if value else None
+
+
+class TimeField(BaseField):
+    type: str = 'time'
+    cast_func = datetime.time
+
+    def from_raw(self, value):
+        if value and isinstance(value, str):
+            return dateparser.parse(value)
+        return value
+
+    def to_raw(self, value: datetime.time):
+        return value.isoformat() if value else None
+
+
+class DateField(BaseField):
+    type: str = 'date'
+    cast_func = datetime.date
+
+    def from_raw(self, value):
+        if value and isinstance(value, str):
+            return dateparser.parse(value).date()
+        return value
+
+    def to_raw(self, value: datetime.date):
+        return value.isoformat() if value else None
+
+
 class BooleanField(BaseField):
     type: str = 'bool'
     cast_func = bool
@@ -115,7 +157,11 @@ class RelatedObjectField(BaseField):
         if self.link_type == self.LINK_TYPES.OUTER:
             return None
         else:
-            return value
+            if value:
+                assert isinstance(value, (str, int))
+                return value
+            else:
+                return value
 
     def from_raw(self, value):
         return value
@@ -140,7 +186,9 @@ class FieldsManager:
         BooleanField.type: BooleanField,
         ArrayField.type: ArrayField,
         ObjectField.type: ObjectField,
-        RelatedObjectField.type: RelatedObjectField
+        RelatedObjectField.type: RelatedObjectField,
+        DateTimeField.type: DateTimeField,
+        DateField.type: DateField
     }
 
     @classmethod

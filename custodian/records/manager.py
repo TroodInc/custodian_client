@@ -46,7 +46,7 @@ class RecordsManager:
         )
         if ok:
             return Record(obj=record.obj, **data)
-        elif data.get('msg', '').find('duplicate'):
+        elif data.get('msg', '').find('duplicate') != -1:
             raise RecordAlreadyExistsException
         else:
             raise CommandExecutionFailureException(data.get('msg'))

@@ -1,3 +1,5 @@
+import datetime
+
 import pytest
 import requests_mock
 from hamcrest import *
@@ -110,12 +112,14 @@ def test_client_returns_list_of_records_on_bulk_create(person_object: Object, cl
             obj=person_object,
             name='Ivan Petrov',
             is_active=False,
+            street="street",
             age=42
         ),
         Record(
             obj=person_object,
             name='Nikolay Kozlov',
             is_active=True,
+            street="street",
             age=36
         )
     ]
@@ -144,14 +148,16 @@ def test_client_returns_list_of_records_on_bulk_update(person_object: Object, cl
             name='Ivan Petrov',
             is_active=False,
             age=15,
-            id=23
+            id=23,
+            street=""
         ),
         Record(
             obj=person_object,
             name='Nikolay Kozlov',
             is_active=True,
             age=44,
-            id=34
+            id=34,
+            street=""
         )
     ]
 
@@ -303,8 +309,8 @@ class TestCustodianBulkOperationsIntegrationSeries:
         :param person_object:
         :param client:
         """
-        first_record = Record(obj=person_object, **{'name': 'Feodor', 'is_active': True, 'age': 23})
-        second_record = Record(obj=person_object, **{'name': 'Victor', 'is_active': False, 'age': 22})
+        first_record = Record(obj=person_object, **{'name': 'Feodor', 'is_active': True, 'age': 23, "street": "St"})
+        second_record = Record(obj=person_object, **{'name': 'Victor', 'is_active': False, 'age': 22, "street": "St"})
         client.records.bulk_create(first_record, second_record)
         assert_that(first_record.get_pk(), instance_of(int))
         assert_that(second_record.get_pk(), instance_of(int))
@@ -338,11 +344,22 @@ class TestCustodianBulkOperationsIntegrationSeries:
         client.records.bulk_delete(*[x for x in client.records.query(person_object)])
         assert_that(client.records.query(person_object), has_length(0))
         client.records.bulk_create(
-            Record(obj=person_object, **{'name': 'Feodor', 'is_active': True, 'age': 23}),
-            Record(obj=person_object, **{'name': 'Victor', 'is_active': False, 'age': 22}),
-            Record(obj=person_object, **{'name': 'Artem', 'is_active': True, 'age': 35}),
-            Record(obj=person_object, **{'name': 'Anton', 'is_active': False, 'age': 55})
+            Record(obj=person_object, **{'name': 'Feodor', 'is_active': True, 'age': 23, 'street': 'street'}),
+            Record(obj=person_object, **{'name': 'Victor', 'is_active': False, 'age': 22, 'street': 'street'}),
+            Record(obj=person_object, **{'name': 'Artem', 'is_active': True, 'age': 35, 'street': 'street'}),
+            Record(obj=person_object, **{'name': 'Anton', 'is_active': False, 'age': 55, 'street': 'street'})
         )
         assert_that(client.records.query(person_object), has_length(4))
         two_first_records = client.records.query(person_object)[:2]
         assert_that(two_first_records, has_length(2))
+
+    def test_datetime_field_handled_right(self, person_object: Object, client: Client):
+        """
+        Create two records and verify pk values are assigned
+        :param person_object:
+        :param client:
+        """
+        first_record = Record(obj=person_object, **{'name': 'Feodor', 'is_active': True, 'age': 23, "street": "St",
+                                                    "created_at": datetime.datetime.now() + datetime.timedelta(days=4)})
+        first_record = client.records.create(first_record)
+        assert_that(first_record.created_at, instance_of(datetime.datetime))

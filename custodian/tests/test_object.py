@@ -33,7 +33,6 @@ def test_object_with_related_inner_object_field_serializes_itself(person_object,
         fields=[
             NumberField(name='id', optional=True),
             StringField(name='street'),
-            BooleanField(name='house'),
             RelatedObjectField(
                 name='person',
                 obj=person_object,
@@ -46,7 +45,7 @@ def test_object_with_related_inner_object_field_serializes_itself(person_object,
     assert_that(serialized_object, is_(instance_of(dict)))
     expected_serialized_field = {'name': 'person', 'type': 'object', 'optional': False, 'linkMeta': 'person',
                                  'linkType': 'inner'}
-    assert_that(serialized_object['fields'][3], equal_to(expected_serialized_field))
+    assert_that(serialized_object['fields'][2], equal_to(expected_serialized_field))
 
 
 def test_object_with_related_outer_object_field_serializes_itself(client):
@@ -56,8 +55,7 @@ def test_object_with_related_outer_object_field_serializes_itself(client):
         cas=True,
         fields=[
             NumberField(name='id', optional=True),
-            StringField(name='street'),
-            BooleanField(name='house')
+            StringField(name='street')
         ],
         objects_manager=client.objects
     )
@@ -68,7 +66,6 @@ def test_object_with_related_outer_object_field_serializes_itself(client):
         fields=[
             NumberField(name='id', optional=True),
             StringField(name='street'),
-            BooleanField(name='house'),
             RelatedObjectField(
                 name='addresses',
                 obj=address_object,
@@ -83,7 +80,7 @@ def test_object_with_related_outer_object_field_serializes_itself(client):
     assert_that(serialized_object, is_(instance_of(dict)))
     expected_serialized_field = {'name': 'addresses', 'type': 'array', 'optional': False, 'linkMeta': 'address',
                                  'linkType': 'outer', 'outerLinkField': 'address_id'}
-    assert_that(serialized_object['fields'][3], equal_to(expected_serialized_field))
+    assert_that(serialized_object['fields'][2], equal_to(expected_serialized_field))
 
 
 def test_improper_object_operations_cause_custodian_error(client: Client, flush_database):
@@ -94,8 +91,7 @@ def test_improper_object_operations_cause_custodian_error(client: Client, flush_
         cas=False,
         fields=[
             NumberField(name='id', optional=True, default={'func': 'nextval'}),
-            StringField(name='street'),
-            BooleanField(name='house')
+            StringField(name='street')
         ],
         objects_manager=client.objects
     )
@@ -108,8 +104,7 @@ def test_improper_object_operations_cause_custodian_error(client: Client, flush_
             cas=False,
             fields=[
                 NumberField(name='id', optional=True),
-                StringField(name='street'),
-                BooleanField(name='house')
+                StringField(name='street')
             ],
             objects_manager=client.objects
         )

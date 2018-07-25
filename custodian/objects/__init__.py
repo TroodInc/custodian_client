@@ -12,7 +12,8 @@ class Object:
     _evaluated = None
     _objects_manager = None
 
-    def __init__(self, name: str, cas: bool, objects_manager, key: str = None, fields: List[BaseField] = None):
+    def __init__(self, name: str, cas: bool, objects_manager, key: str = None, fields: List[BaseField] = None,
+                 actions=None):
         self.name = name
         self.cas = cas
         self._key = key

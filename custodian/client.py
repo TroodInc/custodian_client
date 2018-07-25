@@ -2,6 +2,7 @@ import json
 import logging
 
 import requests
+
 from custodian.command import Command
 from custodian.exceptions import CommandExecutionFailureException
 from custodian.objects.manager import ObjectsManager
@@ -20,9 +21,11 @@ class Client:
     _objects_manager_class = ObjectsManager
 
     server_url = None
+    authorization_token = None
 
-    def __init__(self, server_url: str):
+    def __init__(self, server_url: str, authorization_token: str = None):
         self.server_url = server_url.rstrip('/')
+        self.authorization_token = authorization_token
         self.records = self._records_manager_class(self)
         self.objects = self._objects_manager_class(self)
 
@@ -49,8 +52,12 @@ class Client:
             self._make_query_string(
                 params or {}))
         )
-
-        response = getattr(requests, command.method)(url, json=data, params=self._make_query_string(params or {}))
+        if self.authorization_token:
+            headers = {'Authorization': 'Token {}'.format(self.authorization_token)}
+        else:
+            headers = {}
+        response = getattr(requests, command.method)(url, json=data, params=self._make_query_string(params or {}),
+                                                     headers=headers)
         if response.content:
             response_content = response.json()
             if response_content['status'] == 'OK':
