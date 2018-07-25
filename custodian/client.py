@@ -23,8 +23,12 @@ class Client:
 
     def __init__(self, server_url: str):
         self.server_url = server_url.rstrip('/')
+        self.headers = {}
         self.records = self._records_manager_class(self)
         self.objects = self._objects_manager_class(self)
+
+    def set_header(self, data: dict):
+        self.headers.update(data)
 
     def _make_query_string(self, params: dict):
         queries = []
@@ -50,7 +54,7 @@ class Client:
                 params or {}))
         )
 
-        response = getattr(requests, command.method)(url, json=data, params=self._make_query_string(params or {}))
+        response = getattr(requests, command.method)(url, headers=self.headers, json=data, params=self._make_query_string(params or {}))
         if response.content:
             response_content = response.json()
             if response_content['status'] == 'OK':
