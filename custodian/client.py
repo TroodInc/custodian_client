@@ -53,7 +53,7 @@ class Client:
                 params or {}))
         )
         if self.authorization_token:
-            headers = {'Authorization': 'Token {}'.format(self.authorization_token)}
+            headers = {'Authorization': self.authorization_token}
         else:
             headers = {}
         response = getattr(requests, command.method)(url, json=data, params=self._make_query_string(params or {}),
