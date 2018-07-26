@@ -164,6 +164,13 @@ class RelatedObjectField(BaseField):
                 return value
 
     def from_raw(self, value):
+        # Try to cast potential ids from string to int
+        if isinstance(value, str):
+            try:
+                value = int(value)
+                return value
+            except ValueError:
+                return value
         return value
 
     @property
