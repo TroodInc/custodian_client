@@ -1,9 +1,11 @@
 import datetime
-from typing import NamedTuple
+from typing import NamedTuple, List
 
 import dateparser
 
 from custodian.exceptions import FieldDoesNotExistException, ImproperlyConfiguredFieldException
+
+LINK_TYPES = NamedTuple('LINK_TYPE', [('INNER', str), ('OUTER', str)])(INNER='inner', OUTER='outer')
 
 
 class BaseField:
@@ -122,15 +124,13 @@ class ObjectField(BaseField):
 
 
 class RelatedObjectField(BaseField):
-    LINK_TYPES = NamedTuple('LINK_TYPE', [('INNER', str), ('OUTER', str)])(INNER='inner', OUTER='outer')
-
     type: str = 'relatedObject'
     many: bool = False
     _reverse_field = None
 
     def __init__(self, name: str, obj, link_type: str, optional: bool = False, outer_link_field: str = None,
                  many=False, reverse_field=None, **kwargs):
-        if link_type == self.LINK_TYPES.OUTER and outer_link_field is None:
+        if link_type == LINK_TYPES.OUTER and outer_link_field is None:
             raise ImproperlyConfiguredFieldException('"outer_link_field" must be specified for "outer" link type')
 
         self.link_type = link_type
@@ -154,7 +154,7 @@ class RelatedObjectField(BaseField):
         }
 
     def to_raw(self, value):
-        if self.link_type == self.LINK_TYPES.OUTER:
+        if self.link_type == LINK_TYPES.OUTER:
             return None
         else:
             if value:
@@ -169,7 +169,7 @@ class RelatedObjectField(BaseField):
     @property
     def reverse_field(self):
         if not self._reverse_field:
-            if self.link_type == self.LINK_TYPES.INNER:
+            if self.link_type == LINK_TYPES.INNER:
                 for field in self.obj.fields.values():
                     if isinstance(field, RelatedObjectField):
                         if field.outer_link_field == self.name and field.obj.name == self.parent_obj.name:
@@ -177,6 +177,46 @@ class RelatedObjectField(BaseField):
             else:
                 self._reverse_field = self.obj.fields.get(self.outer_link_field)
         return self._reverse_field
+
+
+class GenericField(BaseField):
+    type: str = 'generic'
+    cast_func = lambda x: x
+    _reverse_field = None
+
+    def __init__(self, name: str, link_type: str, obj=None, objs: List[object] = None, optional: bool = False,
+                 outer_link_field: str = None, reverse_field=None, **kwargs):
+        if link_type == LINK_TYPES.OUTER and outer_link_field is None:
+            raise ImproperlyConfiguredFieldException('"outer_link_field" must be specified for "outer" link type')
+
+        if link_type == LINK_TYPES.INNER and objs is None:
+            raise ImproperlyConfiguredFieldException('"obj" must be specified for "inner" link type')
+
+        self.link_type = link_type
+        self.obj = obj
+        self.objs = objs
+        self.outer_link_field = outer_link_field
+        self._reverse_field = reverse_field
+        super(GenericField, self).__init__(name, optional, default=None)
+
+    def serialize(self):
+        return {
+            **{
+                'name': self.name,
+                'type': self.type,
+                'optional': self.optional,
+                'linkType': self.link_type,
+
+            },
+            **({'outerLinkField': self.outer_link_field} if self.outer_link_field else {}),
+            **({'linkMeta': self.obj.name} if self.link_type == LINK_TYPES.OUTER else {}),
+            **({'linkMetaList': [obj.name for obj in self.objs]} if self.link_type == LINK_TYPES.INNER else {})
+        }
+
+    def to_raw(self, value: dict):
+        assert type(value) is dict
+        assert '_object' in value.keys(), "Generic field value should contain '_object' key"
+        return value
 
 
 class FieldsManager:
