@@ -3,8 +3,8 @@ from hamcrest import *
 
 from custodian.client import Client
 from custodian.exceptions import ObjectUpdateException
-from custodian.objects.fields import NumberField, StringField, BooleanField, RelatedObjectField
 from custodian.objects import Object
+from custodian.objects.fields import NumberField, StringField, BooleanField, RelatedObjectField, LINK_TYPES
 
 
 def test_object_serializes_itself(client):
@@ -36,7 +36,7 @@ def test_object_with_related_inner_object_field_serializes_itself(person_object,
             RelatedObjectField(
                 name='person',
                 obj=person_object,
-                link_type=RelatedObjectField.LINK_TYPES.INNER
+                link_type=LINK_TYPES.INNER
             )
         ],
         objects_manager=client.objects
@@ -70,7 +70,7 @@ def test_object_with_related_outer_object_field_serializes_itself(client):
                 name='addresses',
                 obj=address_object,
                 outer_link_field='address_id',
-                link_type=RelatedObjectField.LINK_TYPES.OUTER,
+                link_type=LINK_TYPES.OUTER,
                 many=True
             )
         ],

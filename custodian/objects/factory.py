@@ -1,16 +1,25 @@
 from custodian.objects import FieldsManager, Object
-from custodian.objects.fields import RelatedObjectField
+from custodian.objects.fields import RelatedObjectField, GenericField
 
 
 class ObjectFactory:
     @classmethod
     def _factory_field(cls, field_data, objects_manager):
-        if field_data.get('linkMeta'):
-            field_data['obj'] = Object(name=field_data['linkMeta'], cas=False, objects_manager=objects_manager)
-            field_data['type'] = RelatedObjectField.type
+        if field_data.get('linkMeta') or field_data.get('linkMetaList'):
+
+            if field_data.get('linkMeta'):
+                field_data['obj'] = Object(name=field_data['linkMeta'], cas=False, objects_manager=objects_manager)
+                del field_data['linkMeta']
+
+            if field_data.get('linkMetaList'):
+                field_data['objs'] = [Object(name=object_name, cas=False, objects_manager=objects_manager) for
+                                      object_name in field_data['linkMetaList']]
+                del field_data['linkMetaList']
+
+            field_data['type'] = GenericField.type if field_data['type'] == "generic" else RelatedObjectField.type
             field_data['link_type'] = field_data.get('linkType')
             field_data['outer_link_field'] = field_data.get('outerLinkField')
-            del field_data['linkMeta']
+
             del field_data['linkType']
             if field_data.get('outerLinkField'):
                 del field_data['outerLinkField']

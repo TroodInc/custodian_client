@@ -2,8 +2,8 @@ from custodian.command import Command, COMMAND_METHOD
 from custodian.exceptions import ObjectUpdateException, ObjectCreateException, \
     ObjectDeletionException
 from custodian.objects import Object
-from custodian.objects.fields import RelatedObjectField
 from custodian.objects.factory import ObjectFactory
+from custodian.objects.fields import RelatedObjectField, LINK_TYPES
 
 
 class ObjectsManager:
@@ -138,7 +138,7 @@ class ObjectsManager:
         """
         # check added fields
         for field in obj.fields.values():
-            if isinstance(field, RelatedObjectField) and field.link_type == RelatedObjectField.LINK_TYPES.INNER:
+            if isinstance(field, RelatedObjectField) and field.link_type == LINK_TYPES.INNER:
                 if field.reverse_field and field.reverse_field.name not in field.obj.fields:
                     field.obj.fields[field.reverse_field.name] = field.reverse_field
                     self.update(field.obj)
@@ -152,7 +152,7 @@ class ObjectsManager:
 
         # check fields which are to remove
         for field in actual_object.fields.values():
-            if isinstance(field, RelatedObjectField) and field.link_type == RelatedObjectField.LINK_TYPES.INNER:
+            if isinstance(field, RelatedObjectField) and field.link_type == LINK_TYPES.INNER:
                 if field.reverse_field and field.name not in obj.fields:
                     del field.obj.fields[field.reverse_field.name]
                     self.update(field.obj)
@@ -162,6 +162,6 @@ class ObjectsManager:
         # it is necessary to check that related fields reference existing Custodian objects
         # if related object does not exist we need to create it first
         for field in obj.fields.values():
-            if isinstance(field, RelatedObjectField) and field.link_type == RelatedObjectField.LINK_TYPES.OUTER:
+            if isinstance(field, RelatedObjectField) and field.link_type == LINK_TYPES.OUTER:
                 if not self.get(field.obj.name):
                     self.create(field.obj)

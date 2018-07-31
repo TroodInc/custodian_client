@@ -3,7 +3,7 @@ from hamcrest import *
 
 from custodian.client import Client
 from custodian.objects import Object
-from custodian.objects.fields import NumberField, StringField, RelatedObjectField
+from custodian.objects.fields import NumberField, StringField, RelatedObjectField, LINK_TYPES
 
 
 def test_client_makes_correct_request_on_object_creation(person_object: Object, client: Client):
@@ -104,7 +104,7 @@ class TestCustodianIntegrationSeries:
                 RelatedObjectField(
                     name='person',
                     obj=person_object,
-                    link_type=RelatedObjectField.LINK_TYPES.INNER
+                    link_type=LINK_TYPES.INNER
                 )
             ],
             key='id',
@@ -129,7 +129,7 @@ class TestCustodianIntegrationSeries:
                 RelatedObjectField(
                     name='person',
                     obj=person_object,
-                    link_type=RelatedObjectField.LINK_TYPES.INNER
+                    link_type=LINK_TYPES.INNER
                 )
             ],
             key='id',

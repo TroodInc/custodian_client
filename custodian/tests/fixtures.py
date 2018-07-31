@@ -1,7 +1,6 @@
 import os
 
 import pytest
-from hamcrest import *
 
 from custodian.client import Client
 from custodian.exceptions import ObjectDeletionException
@@ -55,14 +54,16 @@ def flush_database(client):
     """
     Remove all objects from the database
     """
-    for _ in range(0, 3):
+    for _ in range(0, 100):
         # repeat 2 times to guarantee all objects are deleted
-        for obj in client.objects.get_all():
+        objects = client.objects.get_all()
+        if len(objects) == 0:
+            continue
+        for obj in objects:
             try:
                 client.objects.delete(obj)
             except ObjectDeletionException:
                 pass
-    assert_that(client.objects.get_all(), has_length(0))
 
 
 @pytest.fixture

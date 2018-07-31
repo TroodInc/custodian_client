@@ -228,7 +228,8 @@ class FieldsManager:
         ObjectField.type: ObjectField,
         RelatedObjectField.type: RelatedObjectField,
         DateTimeField.type: DateTimeField,
-        DateField.type: DateField
+        DateField.type: DateField,
+        GenericField.type: GenericField
     }
 
     @classmethod
