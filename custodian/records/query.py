@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 from custodian.exceptions import QueryException
-from custodian.objects.model import Object
+from custodian.objects import Object
 
 
 class Q:
@@ -9,7 +9,7 @@ class Q:
     _logical_expressions = None
     _inverted = None
 
-    _KNOWN_OPERATORS = ('in', 'like', 'eq', 'ne', 'gt', 'ge', 'lt', 'le')
+    _KNOWN_OPERATORS = ('in', 'like', 'eq', 'ne', 'gt', 'ge', 'lt', 'le', 'eq(null())')
 
     def __init__(self, **kwargs):
         self._query = deepcopy(kwargs)
@@ -43,11 +43,12 @@ class Q:
         expressions = []
         for key, value in self._query.items():
             operator, field = self._parse_key(key)
-            expressions.append('{}({}, {})'.format(operator, field, value))
+            value = self._normalize_value(value)
+            expressions.append('{}({},{})'.format(operator, field, value))
         query_string = ', '.join(expressions)
         # and then apply logical operators
         for logical_expression in self._logical_expressions:
-            query_string = '{}({}, {})'.format(
+            query_string = '{}({},{})'.format(
                 logical_expression['operator'], query_string, logical_expression['query'].to_string()
             )
         # apply inversion operator
@@ -69,17 +70,15 @@ class Q:
             raise QueryException('"{}" operator is unknown'.format(operator))
         return operator, field
 
-
-def mark_as_unevaluated(func):
-    def wrapper(*args, **kwargs):
-        result = func(*args, **kwargs)
-        self = args[0]
-        # mark as unevaluated only if no exception was raised
-        self._is_evaluated = False
-        self._result = None
-        return result
-
-    return wrapper
+    def _normalize_value(self, value):
+        """
+        Returns RQL-friendly value
+        :param value:
+        :return:
+        """
+        if isinstance(value, (list, tuple)):
+            return '({})'.format(','.join([str(x) for x in value]))
+        return value
 
 
 def evaluate(func):
@@ -108,19 +107,19 @@ class Query:
         self._is_evaluated = False
         self._result = None
 
-    @mark_as_unevaluated
-    def filter(self, q_object: Q = None, **kwargs):
+    def filter(self, q_object: Q = None, **filters):
         """
         Applies filters to the current query
         :param q_object:
-        :param kwargs:
+        :param filters:
         :return:
         """
+        new_query = QueryFactory.clone(self)
         if q_object:
-            self._q_objects.append(q_object)
-        if kwargs:
-            self._q_objects.append(Q(**kwargs))
-        return self
+            new_query._q_objects.append(q_object)
+        if filters:
+            new_query._q_objects.append(Q(**filters))
+        return new_query
 
     def to_string(self) -> str:
         """
@@ -129,22 +128,24 @@ class Query:
         :return:
         """
         # queries
-        query_string = self._q_objects[0].to_string()
-        for q_object in self._q_objects[1:]:
-            query_string = '{}({}, {})'.format(
-                'and', query_string, q_object.to_string()
-            )
+        if self._q_objects:
+            query_string = self._q_objects[0].to_string()
+            for q_object in self._q_objects[1:]:
+                query_string = '{}({},{})'.format(
+                    'and', query_string, q_object.to_string()
+                )
+        else:
+            query_string = ''
         # ordering options
         if self._orderings:
             ordering_expression = 'sort({})'.format(', '.join(self._orderings))
-            query_string = ', '.join([query_string, ordering_expression])
+            query_string = ','.join(filter(lambda x: bool(x), [query_string, ordering_expression]))
         # limit option
         if self._limit:
-            limit_expression = 'limit({}, {})'.format(self._limit[0], self._limit[1])
-            query_string = ', '.join([query_string, limit_expression])
+            limit_expression = 'limit({},{})'.format(*self._limit)
+            query_string = ','.join(filter(lambda x: bool(x), [query_string, limit_expression]))
         return query_string
 
-    @mark_as_unevaluated
     def order_by(self, *orderings: str):
         """
         Sets ordering to the Query object.
@@ -154,25 +155,31 @@ class Query:
         :param ordering:
         :return:
         """
+        new_query = QueryFactory.clone(self)
         for ordering in orderings:
             ordering = ordering.replace('__', '.')
-            if not ordering.startswith('-'):
-                ordering = '+' + ordering
-            self._orderings.append(ordering)
-        return self
+            new_query._orderings.append(ordering)
+        return new_query
 
-    @mark_as_unevaluated
     def __getitem__(self, item):
+        """
+        If slice is used __getitem__ returns new query with offset-limit applied,
+        otherwise returns item by index
+        :param item:
+        :return:
+        """
         if self._limit:
             raise Exception('Cannot limit already limited query')
+        new_query = QueryFactory.clone(self)
         if isinstance(item, slice):
-            offset = item.start
-            limit = item.stop - item.start
+            offset = item.start or 0
+            limit = item.stop - offset
+            new_query._limit = (offset, limit)
+            return new_query
         else:
-            offset = item
-            limit = 1
-        self._limit = (offset, limit)
-        return self
+            if not self._is_evaluated:
+                self._evaluate()
+            return self._result[item]
 
     @evaluate
     def __iter__(self):
@@ -190,3 +197,13 @@ class Query:
         self._result = records
         self._is_evaluated = True
         return self._result
+
+
+class QueryFactory:
+    @classmethod
+    def clone(cls, query: Query):
+        new_query = Query(obj=query._obj, manager=query._manager)
+        new_query._q_objects = query._q_objects[:]
+        new_query._orderings = query._orderings[:]
+        new_query._limit = query._limit
+        return new_query
