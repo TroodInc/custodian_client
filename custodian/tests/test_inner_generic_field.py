@@ -1,11 +1,14 @@
+import pytest
 from hamcrest import *
 
 from custodian.client import Client
 from custodian.objects import Object
 from custodian.objects.fields import NumberField, GenericField, LINK_TYPES
+from custodian.records.model import Record
 
 
-class TestInngerGenericFieldSeries:
+@pytest.mark.usefixtures('flush_database')
+class TestInnerGenericFieldSchemaLevelSeries:
     def test_inner_generic_field_serialization(self, client: Client):
         object_a = Object(
             name='a',
@@ -57,3 +60,46 @@ class TestInngerGenericFieldSeries:
         assert_that(retrieved_object_b.fields["b__set"].link_type, equal_to(LINK_TYPES.OUTER))
         assert_that(retrieved_object_b.fields["b__set"].type, equal_to(GenericField.type))
         assert_that(retrieved_object_b.fields["b__set"].outer_link_field, equal_to('target_object'))
+
+
+@pytest.mark.usefixtures('flush_database')
+class TestInnerGenericFieldRecordLevelSeries:
+    def test_field_value_creation_and_retrieving(self, client: Client):
+        object_a = Object(
+            name='a',
+            fields=[
+                NumberField(name='id', optional=True, default={'func': 'nextval'})
+            ],
+            key='id',
+            cas=False,
+            objects_manager=client.objects
+        )
+        object_b = Object(
+            name='b',
+            key='id',
+            cas=False,
+            fields=[
+                NumberField(name='id', optional=True, default={'func': 'nextval'}),
+                GenericField(name='target_object', link_type=LINK_TYPES.INNER, objs=[object_a])
+            ],
+            objects_manager=client.objects
+        )
+        client.objects.create(object_a)
+        client.objects.create(object_b)
+        # reload A object, because it has been updated with outer generic field
+        object_a = client.objects.get(object_a.name)
+        a_record = Record(object_a)
+        a_record = client.records.create(a_record)
+        b_record = Record(object_b, target_object={"_object": "a", "id": a_record.id})
+        b_record = client.records.create(b_record)
+        # check inner value
+        assert_that(b_record.target_object, instance_of(dict))
+        assert_that(b_record.target_object, instance_of(dict))
+        assert_that(b_record.target_object["_object"], equal_to("a"))
+        assert_that(b_record.target_object["id"], a_record.id)
+        # check outer value
+        # reload A record
+        a_record = client.records.query(object_a).filter(id__eq=a_record.id)[0]
+        assert_that(a_record.b__set, instance_of(list))
+        assert_that(a_record.b__set, has_length(1))
+        assert_that(int(a_record.b__set[0]), equal_to(b_record.id))

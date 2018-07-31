@@ -181,7 +181,7 @@ class RelatedObjectField(BaseField):
 
 class GenericField(BaseField):
     type: str = 'generic'
-    cast_func = lambda x: x
+    cast_func = lambda x, y: y
     _reverse_field = None
 
     def __init__(self, name: str, link_type: str, obj=None, objs: List[object] = None, optional: bool = False,
@@ -214,8 +214,14 @@ class GenericField(BaseField):
         }
 
     def to_raw(self, value: dict):
+        if self.link_type == LINK_TYPES.OUTER:
+            return
         assert type(value) is dict
         assert '_object' in value.keys(), "Generic field value should contain '_object' key"
+        assert isinstance(value['_object'], str)
+        return value
+
+    def from_raw(self, value):
         return value
 
 
