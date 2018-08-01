@@ -129,7 +129,8 @@ class ObjectsManager:
                     fields_to_add_later.append(field)
                     continue
             safe_fields.append(field)
-        return Object(obj.name, obj.cas, self, obj.key, safe_fields), fields_to_add_later
+        return Object(name=obj.name, cas=obj.cas, objects_manager=self, key=obj.key, fields=safe_fields,
+                      actions=obj.actions), fields_to_add_later
 
     def _post_process_reverse_relations(self, obj: Object):
         """
