@@ -9,6 +9,7 @@ setup(
     author='Trood CIS',
     url='',
     install_requires=[
-        u'requests==2.18.4'
+        u'requests==2.18.4',
+        'dateparser'
     ]
 )
