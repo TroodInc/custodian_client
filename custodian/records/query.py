@@ -45,7 +45,7 @@ class Q:
             operator, field = self._parse_key(key)
             value = self._normalize_value(value)
             expressions.append('{}({},{})'.format(operator, field, value))
-        query_string = ', '.join(expressions)
+        query_string = ','.join(expressions)
         # and then apply logical operators
         for logical_expression in self._logical_expressions:
             query_string = '{}({},{})'.format(
