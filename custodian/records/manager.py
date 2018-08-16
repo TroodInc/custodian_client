@@ -83,7 +83,7 @@ class RecordsManager:
         )
         setattr(record, record.obj.key, None)
 
-    def get(self, obj: Object, record_id: str):
+    def get(self, obj: Object, record_id: str, depth=1):
         """
         Retrieves an existing record from Custodian
         :param obj:
@@ -92,7 +92,7 @@ class RecordsManager:
         """
         data, ok = self.client.execute(
             command=Command(name=self._get_single_record_command_name(obj, record_id), method=COMMAND_METHOD.GET),
-            params={'depth': 1}
+            params={'depth': depth}
         )
         return Record(obj=obj, **data) if ok else None
 
