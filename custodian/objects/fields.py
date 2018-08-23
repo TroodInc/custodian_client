@@ -56,7 +56,14 @@ class BaseField:
 
 class NumberField(BaseField):
     type: str = 'number'
-    cast_func = float
+
+    def to_number(self, value):
+        if isinstance(value, int):
+            return int(value)
+        else:
+            return float(value)
+
+    cast_func = to_number
 
 
 class IntegerField(BaseField):
