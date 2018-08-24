@@ -157,9 +157,8 @@ class RelatedObjectField(BaseField):
         if self.link_type == LINK_TYPES.OUTER:
             return None
         else:
-            if value:
-                assert isinstance(value, (str, int))
-                return value
+            if isinstance(value, dict):
+                return value.get(self.get_pk(), None)
             else:
                 return value
 
@@ -172,6 +171,10 @@ class RelatedObjectField(BaseField):
             except ValueError:
                 return value
         return value
+
+    def get_pk(self):
+        # @todo: must return pk name based on schema
+        return 'id'
 
     @property
     def reverse_field(self):
