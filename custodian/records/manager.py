@@ -34,7 +34,7 @@ class RecordsManager:
         args = [self._base_bulk_command_name, obj.name]
         return '/'.join(args)
 
-    def create(self, record: Record) -> Record:
+    def create(self, record: Record, **kwargs) -> Record:
         """
         Creates a new record in the Custodian
         :param record:
@@ -42,7 +42,8 @@ class RecordsManager:
         """
         data, ok = self.client.execute(
             command=Command(name=self._get_single_record_command_name(record.obj), method=COMMAND_METHOD.PUT),
-            data=record.serialize()
+            data=record.serialize(),
+            params=kwargs
         )
         if ok:
             return Record(obj=record.obj, **data)
@@ -51,14 +52,15 @@ class RecordsManager:
         else:
             raise CommandExecutionFailureException(data.get('msg'))
 
-    def update(self, record: Record):
+    def update(self, record: Record, **kwargs):
         """
         Updates an existing record in the Custodian
         """
         data, ok = self.client.execute(
             command=Command(name=self._get_single_record_command_name(record.obj, record.get_pk()),
                             method=COMMAND_METHOD.POST),
-            data=record.serialize()
+            data=record.serialize(),
+            params=kwargs
         )
         if ok:
             record.__init__(obj=record.obj, **data)
@@ -83,7 +85,7 @@ class RecordsManager:
         )
         setattr(record, record.obj.key, None)
 
-    def get(self, obj: Object, record_id: str, depth=1):
+    def get(self, obj: Object, record_id: str, **kwargs):
         """
         Retrieves an existing record from Custodian
         :param obj:
@@ -92,7 +94,7 @@ class RecordsManager:
         """
         data, ok = self.client.execute(
             command=Command(name=self._get_single_record_command_name(obj, record_id), method=COMMAND_METHOD.GET),
-            params={'depth': depth}
+            params=kwargs
         )
         return Record(obj=obj, **data) if ok else None
 
