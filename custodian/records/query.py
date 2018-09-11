@@ -97,8 +97,9 @@ class Query:
     _limit = None
     _is_evaluated = None
     _result = None
+    _depth = 1
 
-    def __init__(self, obj: Object, manager):
+    def __init__(self, obj: Object, manager, depth=1):
         self._obj = obj
         self._manager = manager
         self._q_objects = []
@@ -106,6 +107,7 @@ class Query:
         self._limit = None
         self._is_evaluated = False
         self._result = None
+        self._depth = depth
 
     def filter(self, q_object: Q = None, **filters):
         """
@@ -193,7 +195,7 @@ class Query:
         """
         Evaluates the query using RecordsManager
         """
-        records = self._manager._query(self._obj, self.to_string())
+        records = self._manager._query(self._obj, self.to_string(), depth=self._depth)
         self._result = records
         self._is_evaluated = True
         return self._result
@@ -206,4 +208,5 @@ class QueryFactory:
         new_query._q_objects = query._q_objects[:]
         new_query._orderings = query._orderings[:]
         new_query._limit = query._limit
+        new_query._depth = query._depth
         return new_query
