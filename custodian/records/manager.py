@@ -98,7 +98,7 @@ class RecordsManager:
         )
         return Record(obj=obj, **data) if ok else None
 
-    def _query(self, obj: Object, query_string: str):
+    def _query(self, obj: Object, query_string: str, **kwargs):
         """
         Performs an Custodian API call and returns a list of records
         :param obj:
@@ -107,7 +107,7 @@ class RecordsManager:
         """
         data, _ = self.client.execute(
             command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.GET),
-            params={'q': query_string, 'depth': 1}
+            params={'q': query_string, **kwargs}
         )
 
         records = []
@@ -115,13 +115,13 @@ class RecordsManager:
             records.append(Record(obj=obj, **record_data))
         return records
 
-    def query(self, obj: Object) -> Query:
+    def query(self, obj: Object, depth=1) -> Query:
         """
         Returns a Query object
         :param obj:
         :return:
         """
-        return Query(obj, self)
+        return Query(obj, self, depth=depth)
 
     def _check_records_have_same_object(self, *records: Record):
         """
