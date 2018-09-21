@@ -44,7 +44,7 @@ class TestInnerGenericFieldSchemaLevelSeries:
         serialized_object_b = object_a.serialize()
         assert_that(serialized_object_b["fields"][1], has_entry("linkMeta", "b"))
         assert_that(serialized_object_b["fields"][1], has_entry("type", "generic"))
-        assert_that(serialized_object_b["fields"][1], has_entry("name", "b__set"))
+        assert_that(serialized_object_b["fields"][1], has_entry("name", "b_set"))
         assert_that(serialized_object_b["fields"][1], has_entry("outerLinkField", "target_object"))
 
     def test_generic_inner_field_reflection(self, client: Client):
@@ -56,10 +56,10 @@ class TestInnerGenericFieldSchemaLevelSeries:
 
     def test_generic_outer_field_reflection(self, client: Client):
         retrieved_object_b = client.objects.get("a")
-        assert_that(retrieved_object_b.fields["b__set"].obj.name, equal_to('b'))
-        assert_that(retrieved_object_b.fields["b__set"].link_type, equal_to(LINK_TYPES.OUTER))
-        assert_that(retrieved_object_b.fields["b__set"].type, equal_to(GenericField.type))
-        assert_that(retrieved_object_b.fields["b__set"].outer_link_field, equal_to('target_object'))
+        assert_that(retrieved_object_b.fields["b_set"].obj.name, equal_to('b'))
+        assert_that(retrieved_object_b.fields["b_set"].link_type, equal_to(LINK_TYPES.OUTER))
+        assert_that(retrieved_object_b.fields["b_set"].type, equal_to(GenericField.type))
+        assert_that(retrieved_object_b.fields["b_set"].outer_link_field, equal_to('target_object'))
 
 
 @pytest.mark.usefixtures('flush_database')
@@ -100,6 +100,6 @@ class TestInnerGenericFieldRecordLevelSeries:
         # check outer value
         # reload A record
         a_record = client.records.query(object_a).filter(id__eq=a_record.id)[0]
-        assert_that(a_record.b__set, instance_of(list))
-        assert_that(a_record.b__set, has_length(1))
-        assert_that(int(a_record.b__set[0]), equal_to(b_record.id))
+        assert_that(a_record.b_set, instance_of(list))
+        assert_that(a_record.b_set, has_length(1))
+        assert_that(int(a_record.b_set[0]), equal_to(b_record.id))
