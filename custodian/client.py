@@ -17,17 +17,28 @@ logger.setLevel(logging.DEBUG)
 
 
 class Client:
+    __instances = {}
     _records_manager_class = RecordsManager
     _objects_manager_class = ObjectsManager
 
     server_url = None
     authorization_token = None
 
-    def __init__(self, server_url: str, authorization_token: str = None):
+    @classmethod
+    def __new__(cls, *args, use_cache=False, **kwargs, ):
+        if use_cache in kwargs:
+            args_key = ''.join([x for x in args[1:]] + [x for x in kwargs.values()])
+            if args_key not in cls.__instances:
+                cls.__instances[args_key] = super().__new__(cls)
+            return cls.__instances[args_key]
+        else:
+            return super().__new__(cls)
+
+    def __init__(self, server_url: str, authorization_token: str = None, use_cache=True):
         self.server_url = server_url.rstrip('/')
         self.authorization_token = authorization_token
         self.records = self._records_manager_class(self)
-        self.objects = self._objects_manager_class(self)
+        self.objects = self._objects_manager_class(self, use_cache=use_cache)
 
     def _make_query_string(self, params: dict):
         queries = []

@@ -33,7 +33,7 @@ class TestInnerActionsSeries:
         object_a = client.objects.get('a')
         assert_that(object_a.actions, has_length(1))
 
-        assert_that(object_a.actions[0]['method'], equal_to(METHODS.CREATE))
-        assert_that(object_a.actions[0]['protocol'], equal_to('REST'))
-        assert_that(object_a.actions[0]['args'], has_length(1))
-        assert_that(object_a.actions[0]['includeValues'], has_length(1))
+        assert_that(object_a.actions[0].method, equal_to(METHODS.CREATE))
+        assert_that(object_a.actions[0].protocol, equal_to('REST'))
+        assert_that(object_a.actions[0].args, has_length(1))
+        assert_that(object_a.actions[0].include_values, has_length(1))

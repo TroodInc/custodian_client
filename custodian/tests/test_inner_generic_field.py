@@ -41,11 +41,11 @@ class TestInnerGenericFieldSchemaLevelSeries:
 
     def test_outer_generic_field_serialization(self, client: Client):
         object_a = client.objects.get('a')
-        serialized_object_b = object_a.serialize()
-        assert_that(serialized_object_b["fields"][1], has_entry("linkMeta", "b"))
-        assert_that(serialized_object_b["fields"][1], has_entry("type", "generic"))
-        assert_that(serialized_object_b["fields"][1], has_entry("name", "b_set"))
-        assert_that(serialized_object_b["fields"][1], has_entry("outerLinkField", "target_object"))
+        serialized_object_a = object_a.serialize()
+        assert_that(serialized_object_a["fields"][1], has_entry("linkMeta", "b"))
+        assert_that(serialized_object_a["fields"][1], has_entry("type", "generic"))
+        assert_that(serialized_object_a["fields"][1], has_entry("name", "b_set"))
+        assert_that(serialized_object_a["fields"][1], has_entry("outerLinkField", "target_object"))
 
     def test_generic_inner_field_reflection(self, client: Client):
         retrieved_object_b = client.objects.get("b")
