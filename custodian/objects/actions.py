@@ -27,3 +27,13 @@ class Action:
             "activeIfNotRoot": self.active_if_not_root,
             "includeValues": self.include_values
         }
+
+    @classmethod
+    def factory(cls, data):
+        return cls(
+            method=data['method'],
+            protocol=data['protocol'],
+            args=data['args'],
+            active_if_not_root=data['activeIfNotRoot'],
+            include_values=data['includeValues']
+        )

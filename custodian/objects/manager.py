@@ -2,16 +2,22 @@ from custodian.command import Command, COMMAND_METHOD
 from custodian.exceptions import ObjectUpdateException, ObjectCreateException, \
     ObjectDeletionException
 from custodian.objects import Object
+from custodian.objects.cache import ObjectCache
 from custodian.objects.factory import ObjectFactory
 from custodian.objects.fields import RelatedObjectField, LINK_TYPES
 
 
 class ObjectsManager:
     _base_command_name = 'meta'
+    _cache_class = ObjectCache
+    _cache = None
 
-    def __init__(self, client):
+    def __init__(self, client, use_cache):
         self.client = client
         self._pending_objects = []
+        self._use_cache = use_cache
+        if use_cache:
+            self._cache = self._cache_class()
 
     def create(self, obj: Object) -> Object:
         """
@@ -45,7 +51,10 @@ class ObjectsManager:
                 # now update object with the rest of fields
                 obj = self.update(obj)
             self._post_process_reverse_relations(obj)
-            return obj
+
+            self._cache.flush()
+            # retrieve final object version
+            return self.get(obj.name)
         else:
             raise ObjectCreateException(data.get('msg'))
 
@@ -61,6 +70,7 @@ class ObjectsManager:
             data=obj.serialize()
         )
         if ok:
+            self._cache.flush()
             return obj
         else:
             raise ObjectUpdateException(data.get('msg'))
@@ -76,6 +86,8 @@ class ObjectsManager:
             command=Command(name=self._get_object_command_name(obj.name), method=COMMAND_METHOD.DELETE)
         )
         if ok:
+            if self._use_cache:
+                self._cache.flush()
             return obj
         else:
             raise ObjectDeletionException(data.get('msg'))
@@ -85,11 +97,17 @@ class ObjectsManager:
         Retrieves existing object from Custodian by name
         :param object_name:
         """
-        data, ok = self.client.execute(
-            command=Command(name=self._get_object_command_name(object_name), method=COMMAND_METHOD.GET)
-        )
-        obj = ObjectFactory.factory(data, objects_manager=self) if ok else None
-        return obj
+        if not self._use_cache or self._cache.get(object_name) is None:
+            data, ok = self.client.execute(
+                command=Command(name=self._get_object_command_name(object_name), method=COMMAND_METHOD.GET)
+            )
+            obj = ObjectFactory.factory(data, objects_manager=self) if ok else None
+            if ok and self._use_cache:
+                self._cache.set(object_name, obj)
+        if self._use_cache:
+            return self._cache.get(object_name)
+        else:
+            return obj
 
     def get_all(self):
         """

@@ -8,14 +8,17 @@ from custodian.objects.fields import NumberField, StringField, RelatedObjectFiel
 
 def test_client_makes_correct_request_on_object_creation(person_object: Object, client: Client):
     with requests_mock.Mocker() as mocker:
-        mocker.put('/'.join([client.server_url, 'meta']), json={'status': 'OK'})
+        mocker.put('/'.join([client.server_url, 'meta']), json={'status': 'OK', 'data': person_object.serialize()})
+        mocker.get('/'.join([client.server_url, 'meta', person_object.name]),
+                   json={'status': 'OK', 'data': person_object.serialize()})
         client.objects.create(person_object)
         assert_that(person_object, is_(instance_of(Object)))
 
 
 def test_client_makes_correct_request_on_object_update(person_object: Object, client: Client):
     with requests_mock.Mocker() as mocker:
-        mocker.post('/'.join([client.server_url, 'meta/{}'.format(person_object.name)]), json={'status': 'OK'})
+        mocker.post('/'.join([client.server_url, 'meta/{}'.format(person_object.name)]),
+                    json={'status': 'OK', 'data': person_object.serialize()})
         # mock preprocess request
         mocker.get('/'.join([client.server_url, 'meta/{}'.format(person_object.name)]),
                    json={'status': 'OK', 'data': person_object.serialize()})
@@ -26,7 +29,8 @@ def test_client_makes_correct_request_on_object_update(person_object: Object, cl
 def test_client_makes_correct_request_on_object_delete(person_object: Object):
     client = Client(server_url='http://mocked/custodian')
     with requests_mock.Mocker() as mocker:
-        mocker.delete('/'.join([client.server_url, 'meta/{}'.format(person_object.name)]), json={'status': 'OK'})
+        mocker.delete('/'.join([client.server_url, 'meta/{}'.format(person_object.name)]),
+                      json={'status': 'OK', 'data': person_object.serialize()})
         obj = client.objects.delete(person_object)
         assert_that(obj, is_(instance_of(Object)))
 

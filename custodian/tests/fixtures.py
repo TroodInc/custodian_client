@@ -58,7 +58,7 @@ def flush_database(client):
         # repeat 2 times to guarantee all objects are deleted
         objects = client.objects.get_all()
         if len(objects) == 0:
-            continue
+            break
         for obj in objects:
             try:
                 client.objects.delete(obj)
