@@ -4,11 +4,15 @@ from custodian.exceptions import CommandExecutionFailureException, RecordAlready
 from custodian.objects import Object
 from custodian.records.model import Record
 from custodian.records.query import Query
+from custodian.records.serialization import RecordDataSerializer
+from custodian.records.validation import RecordValidator
 
 
 class RecordsManager:
     _base_single_command_name = 'data/single'
     _base_bulk_command_name = 'data/bulk'
+    _validation_class = RecordValidator
+    _serialization_class = RecordDataSerializer
 
     def __init__(self, client):
         self.client = client
@@ -65,6 +69,25 @@ class RecordsManager:
         if ok:
             record.__init__(obj=record.obj, **data)
             return record
+        else:
+            if data.get('code') == 'cas_failed':
+                raise CasFailureException(data.get('msg', ''))
+            else:
+                raise RecordUpdateException(data.get('msg', ''))
+
+    def partial_update(self, obj: Object, pk, values, **kwargs):
+        """
+        Performs partial update of existing record
+        """
+        self._validation_class.validate_partial(obj, values)
+        data, ok = self.client.execute(
+            command=Command(name=self._get_single_record_command_name(obj, pk),
+                            method=COMMAND_METHOD.POST),
+            data=self._serialization_class.serialize(obj, values),
+            params=kwargs
+        )
+        if ok:
+            return Record(obj=obj, **data)
         else:
             if data.get('code') == 'cas_failed':
                 raise CasFailureException(data.get('msg', ''))
