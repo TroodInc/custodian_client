@@ -224,6 +224,8 @@ class GenericField(BaseField):
         }
 
     def to_raw(self, value: dict):
+        if value is None:
+            return None
         if self.link_type == LINK_TYPES.OUTER:
             return
         assert type(value) is dict
