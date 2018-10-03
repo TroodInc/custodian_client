@@ -1,4 +1,4 @@
-from custodian.objects import FieldsManager, Object
+from custodian.objects import FieldsManager, Object, Action
 from custodian.objects.fields import RelatedObjectField, GenericField
 
 
@@ -38,4 +38,6 @@ class ObjectFactory:
             fields.append(cls._factory_field(field_data, objects_manager))
         object_data['fields'] = fields
         object_data['objects_manager'] = objects_manager
+        if 'actions' in object_data:
+            object_data['actions'] = [Action.factory(data) for data in object_data['actions']]
         return Object(**object_data)

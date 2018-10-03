@@ -1,9 +1,13 @@
-from custodian.exceptions import FieldValidationException
 from custodian.objects import Object
+from custodian.records.serialization import RecordDataSerializer
+from custodian.records.validation import RecordValidator
 
 
 class Record:
     obj = None
+    _validation_class = RecordValidator
+    _serialization_class = RecordDataSerializer
+    __data = None
 
     def __init__(self, obj: Object, **values):
         """
@@ -11,6 +15,7 @@ class Record:
         :param obj:
         :param values:
         """
+        self.__data = {}
         self.obj = obj
         for field in obj.fields.values():
             value = values.get(field.name, None)
@@ -19,26 +24,26 @@ class Record:
                 value = field.from_raw(value)
             setattr(self, field.name, value)
 
-    def _validate_values(self):
-        """
-        Check record`s values
-        """
-        for field_name, field in self.obj.fields.items():
-            if not field.optional and getattr(self, field.name) is None:
-                raise FieldValidationException('Null value in "{}" violates not-null constraint'.format(field_name))
+    def __setattr__(self, key, value):
+        if key in self.__class__.__dict__:
+            super(Record, self).__setattr__(key, value)
+        else:
+            self.__data[key] = value
+
+    def __getattr__(self, item):
+        return self.__data[item]
+
+    @property
+    def data(self):
+        return self.__data
 
     def serialize(self):
         """
         Serialize record values, empty values are skipped
         :return:
         """
-        self._validate_values()
-        data = {}
-        for field_name, field in self.obj.fields.items():
-            raw_value = field.to_raw(getattr(self, field.name))
-            if raw_value is not None:
-                data[field.name] = raw_value
-        return data
+        self._validation_class.validate_full(self.obj, self.__data)
+        return self._serialization_class.serialize(self.obj, self.__data)
 
     def __repr__(self):
         return '<Record #{} of "{}" object>'.format(self.get_pk(), self.obj.name)

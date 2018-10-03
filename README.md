@@ -6,9 +6,15 @@
 To start using client just instantiate it like in the following snippet: 
 
     from custodian.client import Client
-    client = Client('http://localhost:8080/custodian/', authorization_token="c4216a3440b04270945d2b69ed2d4365")
+    client = Client('http://localhost:8080/custodian/', authorization_token="c4216a3440b04270945d2b69ed2d4365", use_cache=True)
 
-Custodian Server`s URL is required, Trood Auth authorization token is optional.
+##### Arguments:
++   server_url:str - Custodian Server`s URL, this argument is mandatory
++   authorization_token:str - Trood Auth authorization token, this argument is optional.
++   use_cache:bool - whether to cache objects or not. Also singleton instance will be returned for the same arguments 
+set if use_cache is set to True, thus cache would be shared between multiple Client instantiations with the same connection parameters.
+
+Custodian Server`s URL is required, 
 
 
 ## Working with objects
@@ -141,6 +147,20 @@ To update an existing record in the Custodian use *update* method:
 
 ##### Usage example:
     account_record = client.records.update(account_record)
+
+
+### Partially updating existing record
+To update an existing record in the Custodian with partial data(eg. you need just update one field`s value without retrieving entire record from the Custodian) use *partial_update* method:
+
+##### Arguments:
++   obj:Object - Object instance
++   pk - existing record`s PK value
++   values:dict - values to update
+
+##### Returns: Record 
+
+##### Usage example:
+    account_record = client.records.partial_update(account_obj, 4, {'owner': 'Petrov Evgeniy'})
 
 
 ### Deleting existing record
