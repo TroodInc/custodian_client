@@ -39,19 +39,20 @@ class RecordFactory:
         from custodian.records.model import Record
         values = {}
         for field_name, value in raw_data.items():
-            field = obj.fields[field_name]
-            if isinstance(value, dict):
-                if isinstance(field, RelatedObjectField):
-                    values[field_name] = cls._factory_inner_link(field, value)
-                elif isinstance(field, GenericField):
-                    values[field_name] = cls._factory_generic_inner_link(field, value)
+            if field_name in obj.fields:
+                field = obj.fields[field_name]
+                if isinstance(value, dict):
+                    if isinstance(field, RelatedObjectField):
+                        values[field_name] = cls._factory_inner_link(field, value)
+                    elif isinstance(field, GenericField):
+                        values[field_name] = cls._factory_generic_inner_link(field, value)
+                    else:
+                        assert isinstance(field, RelatedObjectField), \
+                            'Attempt to deserialize dict value into non-object field'
+                elif isinstance(value, list):
+                    values[field_name] = cls._factory_outer_link_data(field, value)
                 else:
-                    assert isinstance(field, RelatedObjectField), \
-                        'Attempt to deserialize dict value into non-object field'
-            elif isinstance(value, list):
-                values[field_name] = cls._factory_outer_link_data(field, value)
-            else:
-                values[field_name] = cls._factory_simple_value(field, value)
+                    values[field_name] = cls._factory_simple_value(field, value)
 
         record = Record(obj, _factory_mode=True)
         for key, value in values.items():
