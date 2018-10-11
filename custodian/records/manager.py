@@ -67,8 +67,7 @@ class RecordsManager:
             params=kwargs
         )
         if ok:
-            record.__init__(obj=record.obj, **data)
-            return record
+            return Record(obj=record.obj, **data)
         else:
             if data.get('code') == 'cas_failed':
                 raise CasFailureException(data.get('msg', ''))

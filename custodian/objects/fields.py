@@ -2,7 +2,6 @@ import datetime
 from typing import NamedTuple, List
 
 import dateparser
-
 from custodian.exceptions import FieldDoesNotExistException, ImproperlyConfiguredFieldException
 
 LINK_TYPES = NamedTuple('LINK_TYPE', [('INNER', str), ('OUTER', str)])(INNER='inner', OUTER='outer')
@@ -154,13 +153,12 @@ class RelatedObjectField(BaseField):
         }
 
     def to_raw(self, value):
-        if self.link_type == LINK_TYPES.OUTER:
-            return None
-        else:
-            if isinstance(value, dict):
-                return value.get(self.get_pk(), None)
+        if value is None:
+            if self.optional:
+                return None
             else:
-                return value
+                raise ValueError('"{}" field is required'.format(self.name))
+        return self.obj.fields[self.obj.key].cast_func(value)
 
     def from_raw(self, value):
         # Try to cast potential ids from string to int
