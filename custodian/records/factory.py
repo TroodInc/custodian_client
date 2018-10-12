@@ -3,6 +3,36 @@ from custodian.objects.fields import RelatedObjectField, GenericField, LINK_TYPE
 
 class RecordFactory:
     @classmethod
+    def factory(cls, obj, **raw_data):
+        from custodian.records.model import Record
+        values = {}
+        for field_name in obj.fields.keys():
+            if field_name in raw_data:
+                field = obj.fields[field_name]
+                if field_name in obj.fields:
+                    values[field_name] = cls.factory_field_value(field, raw_data[field_name])
+
+        record = Record(obj, _factory_mode=True)
+        for key, value in values.items():
+            setattr(record, key, value)
+        return record
+
+    @classmethod
+    def factory_field_value(cls, field, value):
+        if isinstance(value, dict):
+            if isinstance(field, RelatedObjectField):
+                return cls._factory_inner_link(field, value)
+            elif isinstance(field, GenericField):
+                return cls._factory_generic_inner_link(field, value)
+            else:
+                assert isinstance(field, RelatedObjectField), \
+                    'Attempt to deserialize dict value into non-object field'
+        elif isinstance(value, list):
+            return cls._factory_outer_link_data(field, value)
+        else:
+            return cls._factory_simple_value(field, value)
+
+    @classmethod
     def _factory_simple_value(cls, field, value):
         return field.from_raw(value)
 
@@ -33,28 +63,3 @@ class RecordFactory:
             else:
                 values.append(cls._factory_simple_value(field.obj.fields[field.obj.key], item))
         return values
-
-    @classmethod
-    def factory(cls, obj, **raw_data):
-        from custodian.records.model import Record
-        values = {}
-        for field_name, value in raw_data.items():
-            if field_name in obj.fields:
-                field = obj.fields[field_name]
-                if isinstance(value, dict):
-                    if isinstance(field, RelatedObjectField):
-                        values[field_name] = cls._factory_inner_link(field, value)
-                    elif isinstance(field, GenericField):
-                        values[field_name] = cls._factory_generic_inner_link(field, value)
-                    else:
-                        assert isinstance(field, RelatedObjectField), \
-                            'Attempt to deserialize dict value into non-object field'
-                elif isinstance(value, list):
-                    values[field_name] = cls._factory_outer_link_data(field, value)
-                else:
-                    values[field_name] = cls._factory_simple_value(field, value)
-
-        record = Record(obj, _factory_mode=True)
-        for key, value in values.items():
-            setattr(record, key, value)
-        return record

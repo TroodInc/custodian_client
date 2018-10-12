@@ -2,7 +2,6 @@ import datetime
 from typing import NamedTuple, List
 
 import dateparser
-
 from custodian.exceptions import FieldDoesNotExistException, ImproperlyConfiguredFieldException
 
 LINK_TYPES = NamedTuple('LINK_TYPE', [('INNER', str), ('OUTER', str)])(INNER='inner', OUTER='outer')
@@ -229,11 +228,12 @@ class GenericField(BaseField):
         if value is None:
             return None
         if self.link_type == LINK_TYPES.OUTER:
-            return
-        assert type(value) is dict
-        assert '_object' in value.keys(), "Generic field value should contain '_object' key"
-        assert isinstance(value['_object'], str)
-        return value
+            return self.obj.fields[self.obj.key].to_raw(value)
+        else:
+            assert type(value) is dict
+            assert '_object' in value.keys(), "Generic field value should contain '_object' key"
+            assert isinstance(value['_object'], str)
+            return value
 
     def from_raw(self, value):
         return value
