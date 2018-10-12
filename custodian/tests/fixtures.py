@@ -19,12 +19,11 @@ def person_object(client):
     return Object(
         name='person',
         key='id',
-        cas=True,
+        cas=False,
         fields=[
             IntegerField(name='id', optional=True, default={'func': 'nextval'}),
             StringField(name='name'),
             NumberField(name='age'),
-            NumberField(name='cas', optional=True),
             StringField(name='street'),
             BooleanField(name='is_active'),
             DateTimeField(name='created_at', default={'func': 'now'}, optional=True)
@@ -45,7 +44,7 @@ def two_records(client, existing_person_object):
                           **{'name': 'Feodor', 'is_active': True, 'age': 20, 'street': 'street'})
     second_record = Record(obj=existing_person_object,
                            **{'name': 'Victor', 'is_active': False, 'age': 40, 'street': 'street'})
-    client.records.bulk_create(first_record, second_record)
+    first_record, second_record = client.records.bulk_create(first_record, second_record)
     return first_record, second_record
 
 

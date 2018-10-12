@@ -57,7 +57,7 @@ class Record:
         """
         Returns the record`s primary key value
         """
-        return getattr(self, self.obj.key)
+        return getattr(self, self.obj.key, None)
 
     def exists(self):
         """

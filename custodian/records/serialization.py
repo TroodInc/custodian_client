@@ -20,11 +20,10 @@ class RecordDataSerializer:
     def _serialize_generic_inner_link_data(cls, field, value):
         assert field.link_type == LINK_TYPES.INNER, \
             'Attempt to serialize dict value into outer field'
-        obj = {x.name: x for x in field.objs}[value['object']]
-        if '_object' in value and obj.key in value and len(value.keys()) == 2:
+        if isinstance(value, dict):
             return cls._serialize_simple_value(field, value)
         else:
-            return cls.serialize(field.obj, value)
+            return cls.serialize(value.obj, value.data).update(_object=value.obj.name)
 
     @classmethod
     def _serialize_outer_link_data(cls, field, value):
@@ -56,4 +55,11 @@ class RecordDataSerializer:
                     raw_data[field_name] = cls._serialize_outer_link_data(field, value)
             else:
                 raw_data[field_name] = cls._serialize_simple_value(field, value)
+
+        # PK value should be defined or not set at all
+        if raw_data.get(obj.key, None) is None:
+            try:
+                del raw_data[obj.key]
+            except KeyError:
+                pass
         return raw_data

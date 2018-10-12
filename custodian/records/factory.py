@@ -16,11 +16,11 @@ class RecordFactory:
     def _factory_generic_inner_link(cls, field, value):
         assert field.link_type == LINK_TYPES.INNER, \
             'Attempt to serialize dict value into outer field'
-        obj = {x.name: x for x in field.objs}[value['object']]
+        obj = {x.name: x for x in field.objs}[value['_object']]
         if '_object' in value and obj.key in value and len(value.keys()) == 2:
             return cls._factory_simple_value(field, value)
         else:
-            return cls.factory(field.obj, value)
+            return cls.factory(obj, **value)
 
     @classmethod
     def _factory_outer_link_data(cls, field, value):

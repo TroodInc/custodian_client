@@ -2,6 +2,7 @@ import datetime
 from typing import NamedTuple, List
 
 import dateparser
+
 from custodian.exceptions import FieldDoesNotExistException, ImproperlyConfiguredFieldException
 
 LINK_TYPES = NamedTuple('LINK_TYPE', [('INNER', str), ('OUTER', str)])(INNER='inner', OUTER='outer')
@@ -35,7 +36,10 @@ class BaseField:
         if self.cast_func is None:
             raise NotImplementedError
         else:
-            return self.cast_func(value)
+            if value is not None:
+                return self.cast_func(value)
+            else:
+                return None
 
     def to_raw(self, value):
         if self.cast_func is None:
