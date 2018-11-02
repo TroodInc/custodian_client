@@ -2,7 +2,6 @@ import datetime
 from typing import NamedTuple, List
 
 import dateparser
-
 from custodian.exceptions import FieldDoesNotExistException, ImproperlyConfiguredFieldException
 
 LINK_TYPES = NamedTuple('LINK_TYPE', [('INNER', str), ('OUTER', str)])(INNER='inner', OUTER='outer')
@@ -36,7 +35,10 @@ class BaseField:
         if self.cast_func is None:
             raise NotImplementedError
         else:
-            return self.cast_func(value)
+            if value is not None:
+                return self.cast_func(value)
+            else:
+                return None
 
     def to_raw(self, value):
         if self.cast_func is None:
@@ -154,13 +156,12 @@ class RelatedObjectField(BaseField):
         }
 
     def to_raw(self, value):
-        if self.link_type == LINK_TYPES.OUTER:
-            return None
-        else:
-            if isinstance(value, dict):
-                return value.get(self.get_pk(), None)
+        if value is None:
+            if self.optional:
+                return None
             else:
-                return value
+                raise ValueError('"{}" field is required'.format(self.name))
+        return self.obj.fields[self.obj.key].cast_func(value)
 
     def from_raw(self, value):
         # Try to cast potential ids from string to int
@@ -227,11 +228,12 @@ class GenericField(BaseField):
         if value is None:
             return None
         if self.link_type == LINK_TYPES.OUTER:
-            return
-        assert type(value) is dict
-        assert '_object' in value.keys(), "Generic field value should contain '_object' key"
-        assert isinstance(value['_object'], str)
-        return value
+            return self.obj.fields[self.obj.key].to_raw(value)
+        else:
+            assert type(value) is dict
+            assert '_object' in value.keys(), "Generic field value should contain '_object' key"
+            assert isinstance(value['_object'], str)
+            return value
 
     def from_raw(self, value):
         return value

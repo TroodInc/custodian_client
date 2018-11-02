@@ -1,4 +1,5 @@
 from custodian.objects import Object
+from custodian.records.factory import RecordFactory
 from custodian.records.serialization import RecordDataSerializer
 from custodian.records.validation import RecordValidator
 
@@ -7,22 +8,26 @@ class Record:
     obj = None
     _validation_class = RecordValidator
     _serialization_class = RecordDataSerializer
+    _factory_class = RecordFactory
     __data = None
 
+    @classmethod
+    def __new__(cls, *args, **kwargs):
+        if not kwargs.pop('_factory_mode', False):
+            args = args[1:]
+            return cls._factory_class.factory(*args, **kwargs)
+        else:
+            return super(Record, cls).__new__(args[0])
+
     def __init__(self, obj: Object, **values):
-        """
-        Assembles a record based on obj.fields specification
-        :param obj:
-        :param values:
-        """
-        self.__data = {}
-        self.obj = obj
-        for field in obj.fields.values():
-            value = values.get(field.name, None)
-            # convert value if it is set
-            if value:
-                value = field.from_raw(value)
-            setattr(self, field.name, value)
+        try:
+            del values['_factory_mode']
+        except KeyError:
+            pass
+        if self.__data is None:
+            self.__data = {}
+        if self.obj is None:
+            self.obj = obj
 
     def __setattr__(self, key, value):
         if key in self.__class__.__dict__:
@@ -52,7 +57,7 @@ class Record:
         """
         Returns the record`s primary key value
         """
-        return getattr(self, self.obj.key)
+        return getattr(self, self.obj.key, None)
 
     def exists(self):
         """
