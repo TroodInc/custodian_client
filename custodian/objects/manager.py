@@ -73,7 +73,7 @@ class ObjectsManager:
             self._cache.flush()
             return obj
         else:
-            raise ObjectUpdateException(data.get('msg'))
+            raise ObjectUpdateException(data.get('Msg'))
 
     def delete(self, obj: Object) -> Object:
         """

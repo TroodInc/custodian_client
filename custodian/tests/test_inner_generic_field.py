@@ -31,6 +31,22 @@ class TestInnerGenericFieldSchemaLevelSeries:
         )
         object_b.fields["target_object"].objs = [object_a]
 
+        object_a_with_manually_set_b_set = Object(
+            name='a',
+            fields=[
+                NumberField(name='id'),
+                GenericField(
+                    name='b_set',
+                    link_type=LINK_TYPES.OUTER,
+                    obj=object_b,
+                    outer_link_field='target_object'
+                )
+            ],
+            key='id',
+            cas=False,
+            objects_manager=client.objects
+        )
+
         serialized_object_b = object_b.serialize()
         assert_that(serialized_object_b["fields"][1], has_entry("linkMetaList", [object_a.name]))
         assert_that(serialized_object_b["fields"][1], has_entry("type", "generic"))
@@ -38,6 +54,7 @@ class TestInnerGenericFieldSchemaLevelSeries:
 
         client.objects.create(object_a)
         client.objects.create(object_b)
+        client.objects.update(object_a_with_manually_set_b_set)
 
     def test_outer_generic_field_serialization(self, client: Client):
         object_a = client.objects.get('a')
@@ -84,8 +101,26 @@ class TestInnerGenericFieldRecordLevelSeries:
             ],
             objects_manager=client.objects
         )
+        object_a_with_manually_set_b_set = Object(
+            name='a',
+            fields=[
+                NumberField(name='id', optional=True, default={'func': 'nextval'}),
+                GenericField(
+                    name='b_set',
+                    link_type=LINK_TYPES.OUTER,
+                    obj=object_b,
+                    outer_link_field='target_object',
+                    optional=True
+                )
+            ],
+            key='id',
+            cas=False,
+            objects_manager=client.objects
+        )
+
         client.objects.create(object_a)
         client.objects.create(object_b)
+        client.objects.update(object_a_with_manually_set_b_set)
         # reload A object, because it has been updated with outer generic field
         object_a = client.objects.get(object_a.name)
         a_record = Record(object_a)

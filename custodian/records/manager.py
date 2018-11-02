@@ -51,10 +51,10 @@ class RecordsManager:
         )
         if ok:
             return Record(obj=record.obj, **data)
-        elif data.get('msg', '').find('duplicate') != -1:
+        elif data.get('Msg', '').find('duplicate') != -1:
             raise RecordAlreadyExistsException
         else:
-            raise CommandExecutionFailureException(data.get('msg'))
+            raise CommandExecutionFailureException(data.get('Msg'))
 
     def update(self, record: Record, **kwargs):
         """
@@ -67,13 +67,12 @@ class RecordsManager:
             params=kwargs
         )
         if ok:
-            record.__init__(obj=record.obj, **data)
-            return record
+            return Record(obj=record.obj, **data)
         else:
             if data.get('code') == 'cas_failed':
-                raise CasFailureException(data.get('msg', ''))
+                raise CasFailureException(data.get('Msg', ''))
             else:
-                raise RecordUpdateException(data.get('msg', ''))
+                raise RecordUpdateException(data.get('Msg', ''))
 
     def partial_update(self, obj: Object, pk, values, **kwargs):
         """
@@ -90,9 +89,9 @@ class RecordsManager:
             return Record(obj=obj, **data)
         else:
             if data.get('code') == 'cas_failed':
-                raise CasFailureException(data.get('msg', ''))
+                raise CasFailureException(data.get('Msg', ''))
             else:
-                raise RecordUpdateException(data.get('msg', ''))
+                raise RecordUpdateException(data.get('Msg', ''))
 
     def delete(self, record: Record):
         """
@@ -169,12 +168,13 @@ class RecordsManager:
             command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.PUT),
             data=[record.serialize() for record in records]
         )
+        records = []
         if ok:
             for i in range(0, len(data)):
-                records[i].__init__(obj, **data[i])
+                records.append(Record(obj, **data[i]))
             return list(records)
         else:
-            raise CommandExecutionFailureException(data.get('msg'))
+            raise CommandExecutionFailureException(data.get('Msg'))
 
     def bulk_update(self, *records: Record):
         """
@@ -191,7 +191,7 @@ class RecordsManager:
                 records[i].__init__(obj, **data[i])
             return list(records)
         else:
-            raise ObjectUpdateException(data.get('msg'))
+            raise ObjectUpdateException(data.get('Msg'))
 
     def bulk_delete(self, *records: Record):
         """
@@ -210,6 +210,6 @@ class RecordsManager:
                     record.id = None
                 return list(records)
             else:
-                raise ObjectDeletionException(data.get('msg'))
+                raise ObjectDeletionException(data.get('Msg'))
         else:
             return []
