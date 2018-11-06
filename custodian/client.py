@@ -76,7 +76,7 @@ class Client:
             else:
                 return response_content.get('error', None), False
         else:
-            if response.status_code == 204:
+            if response.status_code == 200:
                 return None, True
             else:
                 raise CommandExecutionFailureException('Command execution failed')
