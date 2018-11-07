@@ -5,7 +5,8 @@ import pytest
 from custodian.client import Client
 from custodian.exceptions import ObjectDeletionException
 from custodian.objects import Object
-from custodian.objects.fields import NumberField, StringField, BooleanField, IntegerField, DateTimeField
+from custodian.objects.fields import NumberField, StringField, BooleanField, IntegerField, DateTimeField, GenericField, \
+    LINK_TYPES
 from custodian.records.model import Record
 
 
@@ -27,6 +28,21 @@ def person_object(client):
             StringField(name='street'),
             BooleanField(name='is_active'),
             DateTimeField(name='created_at', default={'func': 'now'}, optional=True)
+        ],
+        objects_manager=client.objects
+    )
+
+
+@pytest.fixture
+def task_object(client, person_object):
+    return Object(
+        name='task',
+        key='id',
+        cas=False,
+        fields=[
+            IntegerField(name='id', optional=True, default={'func': 'nextval'}),
+            StringField(name='name'),
+            GenericField(name='owner', link_type=LINK_TYPES.INNER, objs=[person_object], optional=True)
         ],
         objects_manager=client.objects
     )

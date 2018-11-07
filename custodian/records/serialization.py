@@ -20,7 +20,7 @@ class RecordDataSerializer:
     def _serialize_generic_inner_link_data(cls, field, value):
         assert field.link_type == LINK_TYPES.INNER, \
             'Attempt to serialize dict value into outer field'
-        if isinstance(value, dict):
+        if isinstance(value, dict) or value is None:
             return cls._serialize_simple_value(field, value)
         else:
             return cls.serialize(value.obj, value.data).update(_object=value.obj.name)
