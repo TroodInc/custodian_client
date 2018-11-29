@@ -137,13 +137,13 @@ class RecordsManager:
             records.append(Record(obj=obj, **record_data))
         return records
 
-    def query(self, obj: Object, depth=1) -> Query:
+    def query(self, obj: Object, depth=1, omit_outers=False) -> Query:
         """
         Returns a Query object
         :param obj:
         :return:
         """
-        return Query(obj, self, depth=depth)
+        return Query(obj, self, depth=depth, omit_outers=omit_outers)
 
     def _check_records_have_same_object(self, *records: Record):
         """
