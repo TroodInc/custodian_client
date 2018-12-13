@@ -2,6 +2,7 @@ import datetime
 from typing import NamedTuple, List
 
 import dateparser
+
 from custodian.exceptions import FieldDoesNotExistException, ImproperlyConfiguredFieldException
 
 LINK_TYPES = NamedTuple('LINK_TYPE', [('INNER', str), ('OUTER', str)])(INNER='inner', OUTER='outer')
@@ -239,6 +240,49 @@ class GenericField(BaseField):
         return value
 
 
+class ObjectsField(BaseField):
+    type: str = 'objects'
+    cast_func = lambda x, y: y
+    _reverse_field = None
+
+    def __init__(self, name: str, link_type: str, obj=None, optional: bool = False,
+                 outer_link_field: str = None, reverse_field=None, **kwargs):
+        if link_type == LINK_TYPES.OUTER and outer_link_field is None:
+            raise ImproperlyConfiguredFieldException('"outer_link_field" must be specified for "outer" link type')
+
+        self.link_type = link_type
+        self.obj = obj
+        self.outer_link_field = outer_link_field
+        self._reverse_field = reverse_field
+        super(ObjectsField, self).__init__(name, optional, default=None)
+
+    def serialize(self):
+        return {
+            'name': self.name,
+            'type': self.type,
+            'optional': self.optional,
+            'linkMeta': self.obj.name,
+            'linkType': self.link_type,
+
+        }
+
+    def to_raw(self, value):
+        values = []
+        for value_item in value:
+            values.append(self.obj.fields[self.obj.key].cast_func(value_item))
+        return values
+
+    def from_raw(self, value):
+        # Try to cast potential ids from string to int
+        if isinstance(value, str):
+            try:
+                value = int(value)
+                return value
+            except ValueError:
+                return value
+        return value
+
+
 class FieldsManager:
     fields = {
         NumberField.type: NumberField,
@@ -249,7 +293,8 @@ class FieldsManager:
         RelatedObjectField.type: RelatedObjectField,
         DateTimeField.type: DateTimeField,
         DateField.type: DateField,
-        GenericField.type: GenericField
+        GenericField.type: GenericField,
+        ObjectsField.type: ObjectsField
     }
 
     @classmethod

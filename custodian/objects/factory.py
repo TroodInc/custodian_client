@@ -1,5 +1,5 @@
 from custodian.objects import FieldsManager, Object, Action
-from custodian.objects.fields import RelatedObjectField, GenericField
+from custodian.objects.fields import RelatedObjectField, GenericField, ObjectsField
 
 
 class ObjectFactory:
@@ -16,7 +16,8 @@ class ObjectFactory:
                                       object_name in field_data['linkMetaList']]
                 del field_data['linkMetaList']
 
-            field_data['type'] = GenericField.type if field_data['type'] == "generic" else RelatedObjectField.type
+            if field_data['type'] in ["object", "array"]:
+                field_data['type'] = RelatedObjectField.type
             field_data['link_type'] = field_data.get('linkType')
             field_data['outer_link_field'] = field_data.get('outerLinkField')
 

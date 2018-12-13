@@ -1,4 +1,4 @@
-from custodian.objects.fields import RelatedObjectField, LINK_TYPES, GenericField
+from custodian.objects.fields import RelatedObjectField, LINK_TYPES, GenericField, ObjectsField
 
 
 class RecordDataSerializer:
@@ -24,6 +24,16 @@ class RecordDataSerializer:
             return cls._serialize_simple_value(field, value)
         else:
             return cls.serialize(value.obj, value.data).update(_object=value.obj.name)
+
+    @classmethod
+    def _serialize_inner_objects_data(cls, field, value):
+        values = []
+        for item in value:
+            if isinstance(item, dict) or item is None:
+                values.append(cls._serialize_simple_value(field, item))
+            else:
+                values.append(cls.serialize(item.obj, item.data).update(_object=item.obj.name))
+        return values
 
     @classmethod
     def _serialize_outer_link_data(cls, field, value):
@@ -53,6 +63,9 @@ class RecordDataSerializer:
                     raw_data[field_name] = cls._serialize_generic_inner_link_data(field, value)
                 else:
                     raw_data[field_name] = cls._serialize_outer_link_data(field, value)
+            elif isinstance(field, ObjectsField):
+                if field.link_type == LINK_TYPES.INNER:
+                    raw_data[field_name] = cls._serialize_inner_objects_data(field, value)
             else:
                 raw_data[field_name] = cls._serialize_simple_value(field, value)
 

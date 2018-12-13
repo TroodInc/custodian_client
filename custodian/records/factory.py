@@ -1,4 +1,4 @@
-from custodian.objects.fields import RelatedObjectField, GenericField, LINK_TYPES
+from custodian.objects.fields import RelatedObjectField, GenericField, LINK_TYPES, BaseField, ObjectsField
 
 
 class RecordFactory:
@@ -18,7 +18,7 @@ class RecordFactory:
         return record
 
     @classmethod
-    def factory_field_value(cls, field, value):
+    def factory_field_value(cls, field: BaseField, value):
         if isinstance(value, dict):
             if isinstance(field, RelatedObjectField):
                 return cls._factory_inner_link(field, value)
@@ -28,7 +28,10 @@ class RecordFactory:
                 assert isinstance(field, RelatedObjectField), \
                     'Attempt to deserialize dict value into non-object field'
         elif isinstance(value, list):
-            return cls._factory_outer_link_data(field, value)
+            if isinstance(field, ObjectsField):
+                return cls._factory_inner_objects_data(field, value)
+            else:
+                return cls._factory_outer_link_data(field, value)
         else:
             return cls._factory_simple_value(field, value)
 
@@ -56,6 +59,16 @@ class RecordFactory:
     def _factory_outer_link_data(cls, field, value):
         assert field.link_type == LINK_TYPES.OUTER, \
             'Attempt to serialize list value for inner field'
+        values = []
+        for item in value:
+            if isinstance(item, dict):
+                values.append(cls.factory(field.obj, **item))
+            else:
+                values.append(cls._factory_simple_value(field.obj.fields[field.obj.key], item))
+        return values
+
+    @classmethod
+    def _factory_inner_objects_data(cls, field, value):
         values = []
         for item in value:
             if isinstance(item, dict):
