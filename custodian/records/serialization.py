@@ -23,7 +23,7 @@ class RecordDataSerializer:
         if isinstance(value, dict) or value is None:
             return cls._serialize_simple_value(field, value)
         else:
-            return cls.serialize(value.obj, value.data).update(_object=value.obj.name)
+            return {**cls.serialize(value.obj, value.data), **{'_object': value.obj.name}}
 
     @classmethod
     def _serialize_inner_objects_data(cls, field, value):
@@ -32,7 +32,7 @@ class RecordDataSerializer:
             if isinstance(item, dict) or item is None:
                 values.append(cls._serialize_simple_value(field, item))
             else:
-                values.append(cls.serialize(item.obj, item.data).update(_object=item.obj.name))
+                values.append(cls.serialize(item.obj, item.data))
         return values
 
     @classmethod
