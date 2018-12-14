@@ -127,6 +127,8 @@ class RecordsManager:
         :param query_string:
         :return:
         """
+        if kwargs.get("omit_outers", None) is False:
+            del kwargs['omit_outers']
         data, _ = self.client.execute(
             command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.GET),
             params={'q': query_string, **kwargs}
