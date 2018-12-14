@@ -69,10 +69,13 @@ class RecordFactory:
 
     @classmethod
     def _factory_inner_objects_data(cls, field, value):
+        from custodian.records.model import Record
         values = []
         for item in value:
             if isinstance(item, dict):
                 values.append(cls.factory(field.obj, **item))
+            elif isinstance(item, Record):
+                values.append(item)
             else:
                 values.append(cls._factory_simple_value(field.obj.fields[field.obj.key], item))
         return values

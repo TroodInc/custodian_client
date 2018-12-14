@@ -4,7 +4,8 @@ from hamcrest import *
 from custodian.client import Client
 from custodian.exceptions import ObjectUpdateException
 from custodian.objects import Object
-from custodian.objects.fields import NumberField, StringField, BooleanField, RelatedObjectField, LINK_TYPES
+from custodian.objects.fields import NumberField, StringField, BooleanField, RelatedObjectField, LINK_TYPES, \
+    ObjectsField
 
 
 def test_object_serializes_itself(client):
