@@ -27,12 +27,15 @@ class RecordDataSerializer:
 
     @classmethod
     def _serialize_inner_objects_data(cls, field, value):
+        from custodian.records.model import Record
         values = []
         for item in value:
             if isinstance(item, dict) or item is None:
                 values.append(cls._serialize_simple_value(field, item))
+            elif isinstance(item, Record):
+                values.append(item.serialize())
             else:
-                values.append(cls.serialize(item.obj, item.data))
+                values.append(field.obj.fields[field.obj.key].to_raw(item))
         return values
 
     @classmethod

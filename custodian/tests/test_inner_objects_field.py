@@ -91,3 +91,14 @@ class TestInnerGenericFieldRecordLevelSeries:
         assert_that(b_record_with_depth_set_to_2.a_records, instance_of(list))
         assert_that(b_record_with_depth_set_to_2.a_records, has_length(1))
         assert_that(b_record_with_depth_set_to_2.a_records[0], instance_of(Record))
+
+    def test_field_value_serializing_with_nested_record_as_array_of_ids(self, client: Client):
+        self.setup_objects(client)
+        b_record = Record(self.b_object, a_records=[self.a_record])
+
+        # create and check value with depth set to 1
+        b_record_with_depth_set_to_1 = client.records.create(b_record)
+
+        serialized_data = b_record_with_depth_set_to_1.serialize()
+        assert_that(serialized_data['a_records'], has_length(1))
+        assert_that(serialized_data['a_records'][0], instance_of(float))
