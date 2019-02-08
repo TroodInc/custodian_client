@@ -9,7 +9,7 @@ class Q:
     _logical_expressions = None
     _inverted = None
 
-    _KNOWN_OPERATORS = ('in', 'like', 'eq', 'ne', 'gt', 'ge', 'lt', 'le', 'eq(null())')
+    _KNOWN_OPERATORS = ('in', 'like', 'eq', 'ne', 'gt', 'ge', 'lt', 'le', 'is_null')
 
     def __init__(self, **kwargs):
         self._query = deepcopy(kwargs)
