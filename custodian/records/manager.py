@@ -9,8 +9,8 @@ from custodian.records.validation import RecordValidator
 
 
 class RecordsManager:
-    _base_single_command_name = 'data/single'
-    _base_bulk_command_name = 'data/bulk'
+    _base_single_command_name = 'data'
+    _base_bulk_command_name = 'data'
     _validation_class = RecordValidator
     _serialization_class = RecordDataSerializer
 
@@ -45,7 +45,7 @@ class RecordsManager:
         :return:
         """
         data, ok = self.client.execute(
-            command=Command(name=self._get_single_record_command_name(record.obj), method=COMMAND_METHOD.PUT),
+            command=Command(name=self._get_single_record_command_name(record.obj), method=COMMAND_METHOD.POST),
             data=record.serialize(),
             params=kwargs
         )
@@ -62,7 +62,7 @@ class RecordsManager:
         """
         data, ok = self.client.execute(
             command=Command(name=self._get_single_record_command_name(record.obj, record.get_pk()),
-                            method=COMMAND_METHOD.POST),
+                            method=COMMAND_METHOD.PATCH),
             data=record.serialize(),
             params=kwargs
         )
@@ -81,7 +81,7 @@ class RecordsManager:
         self._validation_class.validate_partial(obj, values)
         data, ok = self.client.execute(
             command=Command(name=self._get_single_record_command_name(obj, pk),
-                            method=COMMAND_METHOD.POST),
+                            method=COMMAND_METHOD.PATCH),
             data=self._serialization_class.serialize(obj, values),
             params=kwargs
         )
@@ -167,7 +167,7 @@ class RecordsManager:
         self._check_records_have_same_object(*records)
         obj = records[0].obj
         data, ok = self.client.execute(
-            command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.PUT),
+            command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.POST),
             data=[record.serialize() for record in records]
         )
         records = []
@@ -185,7 +185,7 @@ class RecordsManager:
         self._check_records_have_same_object(*records)
         obj = records[0].obj
         data, ok = self.client.execute(
-            command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.POST),
+            command=Command(name=self._get_bulk_command_name(obj), method=COMMAND_METHOD.PATCH),
             data=[record.serialize() for record in records]
         )
         if ok:
