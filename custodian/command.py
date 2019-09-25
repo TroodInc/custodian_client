@@ -3,6 +3,7 @@ class COMMAND_METHOD:
     GET = 'get'
     POST = 'post'
     PUT = 'put'
+    PATCH = 'patch'
 
     @classmethod
     def get_available_methods(cls):
